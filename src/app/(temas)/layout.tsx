@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { BotonEscuchar } from "./boton-escuchar";
+import { AvisoSinConexion } from "./estado-conexion";
 import { PreguntaLibre } from "./pregunta-libre";
 
 /** Marco de las páginas de temas: nombre del sitio, contenido, pregunta libre y aviso. */
@@ -10,7 +12,11 @@ export default function MarcoTemas({ children }: LayoutProps<"/">) {
           Información sobre el cáncer
         </Link>
       </header>
-      <main>{children}</main>
+      <AvisoSinConexion />
+      <main className="flex flex-col gap-4">
+        <BotonEscuchar />
+        {children}
+      </main>
       <PreguntaLibre />
       <footer className="border-t border-borde pt-4 text-base text-tenue">
         Información educativa basada en artículos científicos. No reemplaza la consulta con un profesional de salud.
