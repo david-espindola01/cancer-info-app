@@ -6,7 +6,9 @@ import { temas } from "@/infraestructura/contenedor";
 import { FUENTES_EJEMPLO, PAGINA_EJEMPLO } from "@/pruebas/pagina-ejemplo";
 import { ContenidoTema } from "./contenido-tema";
 
-vi.mock("@/infraestructura/contenedor", () => ({ temas: { obtener: vi.fn(), regenerar: vi.fn() } }));
+vi.mock("@/infraestructura/contenedor", () => ({
+  temas: { obtener: vi.fn(), regenerar: vi.fn(), precargar: vi.fn() },
+}));
 vi.mock("next/server", () => ({ after: vi.fn(), connection: vi.fn(async () => {}) }));
 const refrescar = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -21,7 +23,7 @@ const paginaLista = {
   tema: "tumor",
   ui: PAGINA_EJEMPLO,
   fuentes: FUENTES_EJEMPLO,
-  palabrasClave: [],
+  palabrasClave: ["benigno", "maligno"],
   versionCorpus: 1,
   estado: "lista" as const,
 };
@@ -37,20 +39,28 @@ afterEach(() => {
 });
 
 describe("ContenidoTema", () => {
-  it("muestra la página guardada sin regenerarla si está al día", async () => {
-    await mostrar({ tipo: "lista", pagina: paginaLista, desactualizada: false });
+  const tareaPosterior = () => vi.mocked(after).mock.calls[0]![0] as () => Promise<void>;
 
+  it("muestra la página guardada y después de responder precarga los temas a los que lleva", async () => {
+    await mostrar({ tipo: "lista", pagina: paginaLista, desactualizada: false });
     expect(screen.getByRole("heading", { level: 1, name: "¿Qué es el cáncer?" })).toBeInTheDocument();
-    expect(after).not.toHaveBeenCalled();
+
+    await tareaPosterior()();
+
+    expect(temas.regenerar).not.toHaveBeenCalled();
+    expect(temas.precargar).toHaveBeenCalledWith(["benigno", "maligno"]);
   });
 
-  it("si está desactualizada la muestra igual y la regenera después de responder", async () => {
+  it("si está desactualizada la muestra igual, la regenera y después precarga", async () => {
     await mostrar({ tipo: "lista", pagina: paginaLista, desactualizada: true });
     expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
 
-    const tarea = vi.mocked(after).mock.calls[0]![0] as () => unknown;
-    tarea();
+    await tareaPosterior()();
+
     expect(temas.regenerar).toHaveBeenCalledWith("tumor");
+    expect(vi.mocked(temas.regenerar).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(temas.precargar).mock.invocationCallOrder[0]!,
+    );
   });
 
   it("mientras se prepara muestra la espera y vuelve a pedir la página", async () => {

@@ -24,9 +24,15 @@ export async function ContenidoTema({ slug }: { slug: string }) {
       );
     case "preparando":
       return <EsperaTema reintentarMs={resultado.reintentarMs} />;
-    case "lista":
-      // Se muestra la versión guardada y, después de responder, se prepara la nueva.
-      if (resultado.desactualizada) after(() => temas.regenerar(resultado.pagina.slug));
-      return <PaginaGenerada ui={resultado.pagina.ui} fuentes={resultado.pagina.fuentes} />;
+    case "lista": {
+      const { pagina, desactualizada } = resultado;
+      // Después de responder: se actualiza esta página si hace falta y se preparan las
+      // siguientes, una tras otra para no competir por el límite por minuto de la IA.
+      after(async () => {
+        if (desactualizada) await temas.regenerar(pagina.slug);
+        await temas.precargar(pagina.palabrasClave);
+      });
+      return <PaginaGenerada ui={pagina.ui} fuentes={pagina.fuentes} />;
+    }
   }
 }

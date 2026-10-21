@@ -45,6 +45,12 @@ export interface RepositorioPaginas {
   liberar(slug: string): Promise<void>;
 }
 
+/** Presupuesto diario de usos de la IA por motivo (se reinicia cada día). */
+export interface PresupuestoDiario {
+  /** Cuenta un uso si todavía queda presupuesto hoy; devuelve false si ya se agotó. */
+  consumir(motivo: string, maximo: number): Promise<boolean>;
+}
+
 export interface RepositorioMemorias {
   /** Guarda (o reemplaza) la memoria de un documento e incrementa la versión del corpus. Devuelve la nueva versión. */
   guardar(documentoId: string, contenido: ContenidoMemoria): Promise<number>;

@@ -3,7 +3,9 @@ type VariableOpcional =
   | "LLM_PROVEEDOR"
   | "GROQ_MODELO_LECTOR"
   | "GROQ_MODELO_PRESENTADOR"
-  | "GROQ_ESFUERZO_RAZONAMIENTO";
+  | "GROQ_ESFUERZO_RAZONAMIENTO"
+  | "PRECARGA_POR_VISITA"
+  | "PRECARGA_MAX_DIARIA";
 
 /**
  * Lee una variable de entorno obligatoria. Si falta, falla con un mensaje claro
@@ -18,6 +20,16 @@ export function variableObligatoria(nombre: VariableObligatoria): string {
     );
   }
   return valor;
+}
+
+/** Lee una variable opcional que debe ser un número entero mayor o igual a 0. */
+export function enteroOpcional(nombre: VariableOpcional, porDefecto: number): number {
+  const valor = variableOpcional(nombre, String(porDefecto));
+  const numero = Number(valor);
+  if (!Number.isInteger(numero) || numero < 0) {
+    throw new Error(`${nombre}="${valor}" no es válido. Debe ser un número entero mayor o igual a 0.`);
+  }
+  return numero;
 }
 
 /** Lee una variable opcional; si se definió, debe ser uno de los valores permitidos. */

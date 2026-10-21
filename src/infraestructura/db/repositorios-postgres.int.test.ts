@@ -2,11 +2,13 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { conexionPruebas, DIRECTORIO_MIGRACIONES, vaciarTablas } from "@/pruebas/bd";
+import { contratoPresupuestoDiario } from "@/pruebas/contratos/presupuesto-diario.contrato";
 import { contratoRepositorioDocumentos } from "@/pruebas/contratos/repositorio-documentos.contrato";
 import { contratoRepositorioMemorias } from "@/pruebas/contratos/repositorio-memorias.contrato";
 import { contratoRepositorioPaginas } from "@/pruebas/contratos/repositorio-paginas.contrato";
 import { memoriaDePrueba, nuevoDocumento } from "@/pruebas/fabricas";
 import { migrar } from "./migrador";
+import { PresupuestoDiarioPostgres } from "./presupuesto-diario-postgres";
 import { RepositorioDocumentosPostgres } from "./repositorio-documentos-postgres";
 import { RepositorioMemoriasPostgres } from "./repositorio-memorias-postgres";
 import { RepositorioPaginasPostgres } from "./repositorio-paginas-postgres";
@@ -55,6 +57,13 @@ describe("RepositorioPaginasPostgres", () => {
     await sql`update paginas set actualizada_en = now() - interval '3 minutes' where slug = 'tumor'`;
 
     expect(await repo.reservar("tumor", "tumor")).toBe(true);
+  });
+});
+
+describe("PresupuestoDiarioPostgres", () => {
+  contratoPresupuestoDiario(async () => {
+    await vaciarTablas(sql);
+    return new PresupuestoDiarioPostgres(sql);
   });
 });
 

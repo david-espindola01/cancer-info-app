@@ -1,6 +1,8 @@
+import { contratoPresupuestoDiario } from "@/pruebas/contratos/presupuesto-diario.contrato";
 import { contratoRepositorioDocumentos } from "@/pruebas/contratos/repositorio-documentos.contrato";
 import { contratoRepositorioMemorias } from "@/pruebas/contratos/repositorio-memorias.contrato";
 import { contratoRepositorioPaginas } from "@/pruebas/contratos/repositorio-paginas.contrato";
+import { PresupuestoDiarioMemoria } from "./presupuesto-diario-memoria";
 import { RepositorioDocumentosMemoria } from "./repositorio-documentos-memoria";
 import { RepositorioMemoriasMemoria } from "./repositorio-memorias-memoria";
 import { RepositorioPaginasMemoria } from "./repositorio-paginas-memoria";
@@ -36,5 +38,19 @@ describe("RepositorioPaginasMemoria", () => {
     await repo.liberar("nada");
 
     expect(await repo.obtener("nada")).toBeNull();
+  });
+});
+
+describe("PresupuestoDiarioMemoria", () => {
+  contratoPresupuestoDiario(async () => new PresupuestoDiarioMemoria());
+
+  it("reinicia la cuenta cada día", async () => {
+    let hoy = "2026-10-21";
+    const presupuesto = new PresupuestoDiarioMemoria(() => hoy);
+    await presupuesto.consumir("precarga", 1);
+
+    hoy = "2026-10-22";
+
+    expect(await presupuesto.consumir("precarga", 1)).toBe(true);
   });
 });

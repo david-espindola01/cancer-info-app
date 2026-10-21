@@ -1,13 +1,15 @@
 import type { Sql } from "postgres";
 import { procesarSiguientePaso } from "@/aplicacion/lectura/procesar-siguiente-paso";
 import { generarPaginaTema, obtenerPaginaTema } from "@/aplicacion/presentacion/paginas-tema";
+import { precargarTemas } from "@/aplicacion/presentacion/precargar-temas";
 import { registrarDocumento } from "@/aplicacion/lectura/registrar-documento";
 import type { ProveedorLLM } from "@/aplicacion/puerto-llm";
 import { crearConexion } from "./db/cliente";
+import { PresupuestoDiarioPostgres } from "./db/presupuesto-diario-postgres";
 import { RepositorioDocumentosPostgres } from "./db/repositorio-documentos-postgres";
 import { RepositorioMemoriasPostgres } from "./db/repositorio-memorias-postgres";
 import { RepositorioPaginasPostgres } from "./db/repositorio-paginas-postgres";
-import { variableObligatoria, variableOpcional } from "./entorno";
+import { enteroOpcional, variableObligatoria, variableOpcional } from "./entorno";
 import { ProveedorFalso } from "./llm/proveedor-falso";
 import { ProveedorGroq, type EsfuerzoRazonamiento } from "./llm/proveedor-groq";
 import { respuestaDesdeEsquema } from "./llm/respuesta-generica";
@@ -57,6 +59,15 @@ const dependenciasPresentacion = () => ({
 export const temas = {
   obtener: (entrada: string) => obtenerPaginaTema(entrada, dependenciasPresentacion()),
   regenerar: (slug: string) => generarPaginaTema(slug, dependenciasPresentacion()),
+  precargar: (slugs: string[]) =>
+    precargarTemas(
+      slugs,
+      { ...dependenciasPresentacion(), presupuesto: new PresupuestoDiarioPostgres(sql()) },
+      {
+        porVisita: enteroOpcional("PRECARGA_POR_VISITA", 2),
+        maximoDiario: enteroOpcional("PRECARGA_MAX_DIARIA", 30),
+      },
+    ),
 };
 
 export const sesion = {

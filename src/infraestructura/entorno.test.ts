@@ -1,4 +1,20 @@
-import { variableObligatoria, variableOpcional } from "./entorno";
+import { enteroOpcional, variableObligatoria, variableOpcional } from "./entorno";
+
+describe("enteroOpcional", () => {
+  it("usa el valor por defecto o el número definido", () => {
+    vi.stubEnv("PRECARGA_POR_VISITA", "");
+    expect(enteroOpcional("PRECARGA_POR_VISITA", 2)).toBe(2);
+
+    vi.stubEnv("PRECARGA_POR_VISITA", "0");
+    expect(enteroOpcional("PRECARGA_POR_VISITA", 2)).toBe(0);
+  });
+
+  it.each(["dos", "-1", "1.5"])("rechaza «%s»", (valor) => {
+    vi.stubEnv("PRECARGA_POR_VISITA", valor);
+
+    expect(() => enteroOpcional("PRECARGA_POR_VISITA", 2)).toThrow(/número entero mayor o igual a 0/);
+  });
+});
 
 afterEach(() => {
   vi.unstubAllEnvs();
