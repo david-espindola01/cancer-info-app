@@ -1,22 +1,56 @@
 @import "tailwindcss";
 
+/* Paleta de lectura fácil: alto contraste (WCAG AA o más) en modo claro y oscuro. */
 :root {
-  --background: #ffffff;
+  --background: #fbfaf7;
   --foreground: #1a1a1a;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  /* Fuentes del sistema: no se descarga ninguna tipografía (conexiones lentas). */
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --tenue: #4a4a4a;
+  --superficie: #ffffff;
+  --borde: #dcd8cf;
+  --acento: #0f6b63;
+  --acento-suave: #e3f2ef;
+  --aviso-informativo: #1d4ed8;
+  --aviso-informativo-fondo: #eef3ff;
+  --aviso-importante: #a14a00;
+  --aviso-importante-fondo: #fff5e6;
+  --aviso-consulta: #6b21a8;
+  --aviso-consulta-fondo: #f6efff;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #121212;
     --foreground: #f2f2f2;
+    --tenue: #c4c4c4;
+    --superficie: #1c1c1c;
+    --borde: #3a3a3a;
+    --acento: #5fd4c4;
+    --acento-suave: #12302c;
+    --aviso-informativo: #8fb0ff;
+    --aviso-informativo-fondo: #16203a;
+    --aviso-importante: #ffb366;
+    --aviso-importante-fondo: #33220d;
+    --aviso-consulta: #d2a8ff;
+    --aviso-consulta-fondo: #2a1a3d;
   }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-tenue: var(--tenue);
+  --color-superficie: var(--superficie);
+  --color-borde: var(--borde);
+  --color-acento: var(--acento);
+  --color-acento-suave: var(--acento-suave);
+  --color-aviso-informativo: var(--aviso-informativo);
+  --color-aviso-informativo-fondo: var(--aviso-informativo-fondo);
+  --color-aviso-importante: var(--aviso-importante);
+  --color-aviso-importante-fondo: var(--aviso-importante-fondo);
+  --color-aviso-consulta: var(--aviso-consulta);
+  --color-aviso-consulta-fondo: var(--aviso-consulta-fondo);
+  /* Fuentes del sistema: no se descarga ninguna tipografía (conexiones lentas). */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 body {
@@ -24,5 +58,26 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   font-size: 1.125rem;
-  line-height: 1.6;
+  line-height: 1.65;
+}
+
+/* Palabra clave elegible: subrayado grueso y área táctil cómoda. */
+.tema-subrayado {
+  color: var(--acento);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 4px;
+  border-radius: 4px;
+  padding: 0.1em 0.15em;
+  margin: 0 -0.15em;
+}
+
+.tema-subrayado:hover {
+  background: var(--acento-suave);
+}
+
+:focus-visible {
+  outline: 3px solid var(--acento);
+  outline-offset: 2px;
 }
