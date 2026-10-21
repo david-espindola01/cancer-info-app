@@ -17,6 +17,7 @@
     "verificar": "npm run lint && npm run typecheck && npm run knip && npm run duplicados && npm run dependencias && npm run test:cobertura && npm run build"
   },
   "dependencies": {
+    "@hashbrownai/core": "^0.7.0",
     "next": "16.4.2",
     "react": "19.3.0",
     "react-dom": "19.3.0"
