@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
+import { esquemaMemoria } from "@/aplicacion/lectura/esquemas";
 import { conexionPruebas, vaciarTablas } from "@/pruebas/bd";
 import { DELETE as cerrarSesion, POST as iniciarSesion } from "./sesion/route";
+import { POST as procesarPaso } from "./documentos/[id]/paso/route";
 import { GET as listarDocumentos, POST as subirDocumento } from "./documentos/route";
 
 const CLAVE = "clave-de-prueba";
@@ -24,6 +26,7 @@ beforeAll(() => {
   process.env.DATABASE_URL = process.env.DATABASE_URL_PRUEBAS;
   process.env.ADMIN_CLAVE = CLAVE;
   process.env.SESION_SECRETO = "secreto-de-prueba-suficientemente-largo";
+  process.env.LLM_PROVEEDOR = "falso";
 });
 
 beforeEach(() => vaciarTablas(sql));
@@ -88,6 +91,47 @@ describe("/api/documentos", () => {
     expect((await subir()).status).toBe(409);
     const lista = await (await listarDocumentos(peticion("/api/documentos", { cookie }))).json();
     expect(lista.documentos).toEqual([documento]);
+  });
+
+  it("lee un artículo paso a paso hasta dejarlo listo", async () => {
+    const cookie = await cookieDeSesion();
+    const subida = await subirDocumento(
+      peticion("/api/documentos", { metodo: "POST", cuerpo: { titulo: "Estudio", texto: textoArticulo }, cookie }),
+    );
+    const { documento } = await subida.json();
+    const paso = () =>
+      procesarPaso(peticion(`/api/documentos/${documento.id}/paso`, { metodo: "POST", cookie }), {
+        params: Promise.resolve({ id: documento.id }),
+      });
+
+    expect(await (await paso()).json()).toEqual({ tipo: "avance", procesados: 1, total: 1 });
+    expect(await (await paso()).json()).toEqual({ tipo: "listo" });
+
+    const lista = await (await listarDocumentos(peticion("/api/documentos", { cookie }))).json();
+    expect(lista.documentos[0]).toMatchObject({ id: documento.id, estado: "listo" });
+    const [memoria] = await sql`select contenido from memorias where documento_id = ${documento.id}`;
+    expect(() => esquemaMemoria.validate(memoria?.contenido)).not.toThrow();
+  });
+
+  it.each(["no-es-un-uuid", "00000000-0000-0000-0000-000000000000"])(
+    "responde 404 al leer el documento inexistente %s",
+    async (id) => {
+      const cookie = await cookieDeSesion();
+
+      const respuesta = await procesarPaso(peticion(`/api/documentos/${id}/paso`, { metodo: "POST", cookie }), {
+        params: Promise.resolve({ id }),
+      });
+
+      expect(respuesta.status).toBe(404);
+    },
+  );
+
+  it("exige sesión para leer un documento", async () => {
+    const respuesta = await procesarPaso(peticion("/api/documentos/x/paso", { metodo: "POST" }), {
+      params: Promise.resolve({ id: "x" }),
+    });
+
+    expect(respuesta.status).toBe(401);
   });
 
   it.each([

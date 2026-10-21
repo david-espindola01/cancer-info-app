@@ -80,4 +80,11 @@ export class RepositorioDocumentosPostgres implements RepositorioDocumentos {
       order by orden`;
     return filas.map((fila) => fila.notas);
   }
+
+  async progreso(documentoId: string) {
+    const [fila] = await this.sql<{ procesados: number; total: number }[]>`
+      select count(notas)::int as procesados, count(*)::int as total
+      from fragmentos where documento_id = ${documentoId}`;
+    return { procesados: fila!.procesados, total: fila!.total };
+  }
 }

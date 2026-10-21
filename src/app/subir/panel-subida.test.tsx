@@ -8,7 +8,7 @@ vi.mock("./extraer-texto-pdf", () => ({ extraerTextoPdf: vi.fn() }));
 const documento: DocumentoVista = {
   id: "1",
   titulo: "Estudio sobre piel",
-  estado: "pendiente",
+  estado: "listo",
   error: null,
   creadoEn: "2026-10-21T00:00:00.000Z",
 };
@@ -16,8 +16,10 @@ const documento: DocumentoVista = {
 const json = (cuerpo: unknown, status = 200) =>
   new Response(JSON.stringify(cuerpo), { status, headers: { "Content-Type": "application/json" } });
 
-let respuestas: Response[];
-const fetchFalso = vi.fn(async () => respuestas.shift() ?? json({ documentos: [] }));
+let respuestas: (Response | Promise<Response>)[];
+const fetchFalso = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>(
+  async () => respuestas.shift() ?? json({ documentos: [] }),
+);
 
 beforeEach(() => {
   respuestas = [];
@@ -36,7 +38,7 @@ describe("PanelSubida", () => {
     fireEvent.click(screen.getByRole("button", { name: "Entrar" }));
 
     expect(await screen.findByText("Estudio sobre piel")).toBeInTheDocument();
-    expect(screen.getByText("En espera de lectura")).toBeInTheDocument();
+    expect(screen.getByText("Listo")).toBeInTheDocument();
     expect(fetchFalso).toHaveBeenNthCalledWith(2, "/api/sesion", expect.objectContaining({
       method: "POST",
       body: JSON.stringify({ clave: "secreta" }),
@@ -87,6 +89,38 @@ describe("PanelSubida", () => {
     });
 
     expect(await screen.findByText("El PDF casi no tiene texto.")).toBeInTheDocument();
+  });
+
+  it("lee automáticamente los artículos pendientes y muestra el progreso", async () => {
+    let terminarLectura!: (respuesta: Response) => void;
+    respuestas = [
+      json({ documentos: [{ ...documento, estado: "pendiente" }] }),
+      json({ tipo: "avance", procesados: 1, total: 2 }),
+      new Promise<Response>((resolver) => (terminarLectura = resolver)),
+      json({ documentos: [documento] }),
+    ];
+    render(<PanelSubida />);
+
+    expect(await screen.findByText("Leyendo parte 2 de 2…")).toBeInTheDocument();
+    terminarLectura(json({ tipo: "listo" }));
+
+    expect(await screen.findByText("Listo")).toBeInTheDocument();
+    expect(fetchFalso).toHaveBeenCalledWith("/api/documentos/1/paso", { method: "POST" });
+  });
+
+  it("permite reintentar la lectura de un artículo con error", async () => {
+    respuestas = [
+      json({ documentos: [{ ...documento, estado: "error", error: "La IA falló." }] }),
+      json({ tipo: "listo" }),
+      json({ documentos: [documento] }),
+    ];
+    render(<PanelSubida />);
+    expect(await screen.findByText("Error — La IA falló.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Reintentar" }));
+
+    expect(await screen.findByText("Listo")).toBeInTheDocument();
+    expect(fetchFalso).toHaveBeenCalledWith("/api/documentos/1/paso", { method: "POST" });
   });
 
   it("muestra un error si el servidor falla al listar", async () => {

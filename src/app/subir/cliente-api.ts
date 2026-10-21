@@ -1,4 +1,7 @@
+import type { ResultadoPaso } from "@/aplicacion/lectura/procesar-siguiente-paso";
 import type { DocumentoVista } from "../api/http";
+
+export type ResultadoPasoVista = Exclude<ResultadoPaso, { tipo: "no-existe" }>;
 
 const ENCABEZADOS_JSON = { "Content-Type": "application/json" };
 
@@ -28,6 +31,12 @@ export async function pedirSesion(clave: string): Promise<string | null> {
     body: JSON.stringify({ clave }),
   });
   return respuesta.ok ? null : mensajeDeError(respuesta);
+}
+
+/** Pide al servidor que avance un paso en la lectura de un documento. */
+export async function pedirPaso(id: string): Promise<ResultadoPasoVista> {
+  const respuesta = await fetch(`/api/documentos/${id}/paso`, { method: "POST" });
+  return respuesta.ok ? respuesta.json() : { tipo: "error", mensaje: await mensajeDeError(respuesta) };
 }
 
 export async function enviarDocumento(

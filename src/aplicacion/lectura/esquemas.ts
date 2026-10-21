@@ -20,6 +20,9 @@ export const esquemaNotasFragmento = s.object("Notas sobre una parte del artícu
   cifras: s.array("Datos numéricos relevantes", cifra),
   conceptos: s.array("Términos técnicos que aparecen", concepto),
   limitaciones: s.array("Limitaciones o advertencias que menciona el texto", s.string("Una limitación")),
+  datosDeCita: s.string(
+    "Autores, año y revista si aparecen en esta parte (suelen estar al inicio); cadena vacía si no",
+  ),
 });
 
 export const esquemaMemoria = s.object("Memoria con lo fundamental del artículo", {

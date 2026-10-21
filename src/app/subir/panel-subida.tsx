@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { DocumentoVista } from "../api/http";
 import { pedirDocumentos } from "./cliente-api";
 import { FormularioAcceso } from "./formulario-acceso";
-import { ListaDocumentos } from "./lista-documentos";
+import { leerDocumento } from "./leer-documento";
+import { ListaDocumentos, type Actividad } from "./lista-documentos";
 import { SelectorPdf } from "./selector-pdf";
 
 type Estado =
@@ -22,12 +23,37 @@ function consultarEstado(): Promise<Estado> {
 
 export function PanelSubida() {
   const [estado, setEstado] = useState<Estado>({ fase: "cargando" });
+  const [actividad, setActividad] = useState<Actividad | null>(null);
+  // Se lee un documento a la vez: el límite de la IA es por minuto.
+  const leyendo = useRef(false);
 
   const cargar = useCallback(() => {
     void consultarEstado().then(setEstado);
   }, []);
 
+  const leer = useCallback(
+    (id: string) => {
+      if (leyendo.current) return;
+      leyendo.current = true;
+      void leerDocumento(id, (mensaje) => setActividad({ id, mensaje })).finally(() => {
+        leyendo.current = false;
+        setActividad(null);
+        cargar();
+      });
+    },
+    [cargar],
+  );
+
   useEffect(cargar, [cargar]);
+
+  // Lee automáticamente, de a uno, los documentos que esperan lectura.
+  const siguiente =
+    estado.fase === "listo"
+      ? estado.documentos.find((d) => d.estado === "pendiente" || d.estado === "procesando")?.id
+      : undefined;
+  useEffect(() => {
+    if (siguiente) leer(siguiente);
+  }, [siguiente, leer]);
 
   switch (estado.fase) {
     case "cargando":
@@ -45,7 +71,7 @@ export function PanelSubida() {
         <>
           <SelectorPdf alSubir={cargar} />
           <h2 className="mt-8 text-xl font-bold">Artículos</h2>
-          <ListaDocumentos documentos={estado.documentos} />
+          <ListaDocumentos documentos={estado.documentos} actividad={actividad} alReintentar={leer} />
         </>
       );
   }

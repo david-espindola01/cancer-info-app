@@ -59,6 +59,11 @@ export class RepositorioDocumentosMemoria implements RepositorioDocumentos {
     return this.fragmentosDe(documentoId).flatMap((fragmento) => (fragmento.notas ? [fragmento.notas] : []));
   }
 
+  async progreso(documentoId: string) {
+    const fragmentos = this.fragmentosDe(documentoId);
+    return { procesados: fragmentos.filter((f) => f.notas !== null).length, total: fragmentos.length };
+  }
+
   private fragmentosDe(documentoId: string) {
     return this.fragmentos
       .filter((fragmento) => fragmento.documentoId === documentoId)

@@ -10,9 +10,10 @@ try {
 const enCI = Boolean(process.env.CI);
 const urlBase = "http://localhost:3000";
 
-// El servidor de las pruebas usa la base exclusiva de pruebas, nunca la de desarrollo.
+// El servidor de las pruebas usa la base exclusiva de pruebas (nunca la de desarrollo)
+// y el proveedor LLM falso (no gasta cuota de Groq).
 const entornoServidor = Object.fromEntries(
-  Object.entries({ ...process.env, DATABASE_URL: process.env.DATABASE_URL_PRUEBAS }).filter(
+  Object.entries({ ...process.env, DATABASE_URL: process.env.DATABASE_URL_PRUEBAS, LLM_PROVEEDOR: "falso" }).filter(
     (par): par is [string, string] => par[1] !== undefined,
   ),
 );

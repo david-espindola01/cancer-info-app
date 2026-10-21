@@ -1,4 +1,5 @@
 import { RepositorioDocumentosMemoria } from "@/infraestructura/memoria/repositorio-documentos-memoria";
+import { notasDePrueba } from "@/pruebas/fabricas";
 import { registrarDocumento } from "./registrar-documento";
 
 const parrafo = "Las células del cuerpo se renuevan de forma ordenada. ".repeat(30);
@@ -20,7 +21,7 @@ describe("registrarDocumento", () => {
     let fragmentos = 0;
     for (let f = await documentos.siguienteFragmentoPendiente(id); f; f = await documentos.siguienteFragmentoPendiente(id)) {
       expect(f.texto.length).toBeLessThanOrEqual(12_000);
-      await documentos.guardarNotas(id, f.orden, { hallazgos: [], cifras: [], conceptos: [], limitaciones: [] });
+      await documentos.guardarNotas(id, f.orden, notasDePrueba());
       fragmentos += 1;
     }
     expect(fragmentos).toBeGreaterThan(1);

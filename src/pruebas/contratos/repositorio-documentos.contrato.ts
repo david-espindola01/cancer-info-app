@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { RepositorioDocumentos } from "@/aplicacion/puertos";
-import { nuevoDocumento } from "../fabricas";
+import { notasDePrueba, nuevoDocumento } from "../fabricas";
 
 /** Pruebas que toda implementación de RepositorioDocumentos debe pasar. */
 export function contratoRepositorioDocumentos(crear: () => Promise<RepositorioDocumentos>) {
@@ -51,8 +51,9 @@ export function contratoRepositorioDocumentos(crear: () => Promise<RepositorioDo
 
   it("entrega los fragmentos pendientes en orden y acumula sus notas", async () => {
     const { documento } = await repo.registrar(nuevoDocumento({ fragmentos: ["uno", "dos"] }));
-    const notas = { hallazgos: ["h"], cifras: [], conceptos: [], limitaciones: [] };
+    const notas = notasDePrueba({ hallazgos: ["h"] });
 
+    expect(await repo.progreso(documento.id)).toEqual({ procesados: 0, total: 2 });
     expect(await repo.siguienteFragmentoPendiente(documento.id)).toEqual({
       documentoId: documento.id,
       orden: 0,
@@ -60,9 +61,16 @@ export function contratoRepositorioDocumentos(crear: () => Promise<RepositorioDo
     });
     await repo.guardarNotas(documento.id, 0, notas);
     expect(await repo.siguienteFragmentoPendiente(documento.id)).toMatchObject({ orden: 1, texto: "dos" });
+    expect(await repo.progreso(documento.id)).toEqual({ procesados: 1, total: 2 });
 
     await repo.guardarNotas(documento.id, 1, { ...notas, hallazgos: ["h2"] });
     expect(await repo.siguienteFragmentoPendiente(documento.id)).toBeNull();
     expect((await repo.listarNotas(documento.id)).map((n) => n.hallazgos)).toEqual([["h"], ["h2"]]);
+  });
+
+  it("el progreso de un documento sin fragmentos es 0 de 0", async () => {
+    const { documento } = await repo.registrar(nuevoDocumento({ fragmentos: [] }));
+
+    expect(await repo.progreso(documento.id)).toEqual({ procesados: 0, total: 0 });
   });
 }

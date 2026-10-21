@@ -1,5 +1,22 @@
+import type { s } from "@hashbrownai/core";
 import type { Documento, EstadoDocumento, Fragmento } from "@/dominio/documento";
 import type { ContenidoMemoria, NotasFragmento } from "./lectura/esquemas";
+
+export interface PeticionJson<E extends s.HashbrownType> {
+  /** Nombre corto del esquema (lo exige la API de salida estructurada). */
+  nombre: string;
+  sistema: string;
+  usuario: string;
+  esquema: E;
+}
+
+/**
+ * Un modelo de lenguaje que responde JSON que cumple un esquema.
+ * Lanza `LimiteExcedido` o `RespuestaInvalida` (ver errores-llm.ts).
+ */
+export interface ProveedorLLM {
+  generarJson<E extends s.HashbrownType>(peticion: PeticionJson<E>): Promise<s.Infer<E>>;
+}
 
 export interface NuevoDocumento {
   titulo: string;
@@ -19,6 +36,7 @@ export interface RepositorioDocumentos {
   guardarNotas(documentoId: string, orden: number, notas: NotasFragmento): Promise<void>;
   /** Notas de los fragmentos ya procesados, en orden. */
   listarNotas(documentoId: string): Promise<NotasFragmento[]>;
+  progreso(documentoId: string): Promise<{ procesados: number; total: number }>;
 }
 
 export interface MemoriaEncontrada {

@@ -1,4 +1,4 @@
-import type { ContenidoMemoria } from "@/aplicacion/lectura/esquemas";
+import type { ContenidoMemoria, NotasFragmento } from "@/aplicacion/lectura/esquemas";
 import type { NuevoDocumento } from "@/aplicacion/puertos";
 
 let contador = 0;
@@ -12,6 +12,11 @@ export function nuevoDocumento(cambios: Partial<NuevoDocumento> = {}): NuevoDocu
     fragmentos: ["Primer fragmento.", "Segundo fragmento."],
     ...cambios,
   };
+}
+
+/** Notas de un fragmento, vacías salvo los campos indicados. */
+export function notasDePrueba(cambios: Partial<NotasFragmento> = {}): NotasFragmento {
+  return { hallazgos: [], cifras: [], conceptos: [], limitaciones: [], datosDeCita: "", ...cambios };
 }
 
 /** Una memoria completa y válida; `cambios` reemplaza los campos indicados. */
