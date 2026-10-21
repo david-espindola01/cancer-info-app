@@ -42,3 +42,12 @@ next-env.d.ts
 
 # documentación interna (no se versiona)
 /docs/
+
+# plantilla de variables de entorno (sí se versiona)
+!.env.example
+
+# pruebas e2e
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

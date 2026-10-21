@@ -1,0 +1,8 @@
+{
+  "path": ["src", "e2e"],
+  "format": ["typescript", "tsx"],
+  "minTokens": 50,
+  "threshold": 0,
+  "reporters": ["console"],
+  "gitignore": true
+}
