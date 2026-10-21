@@ -8,7 +8,7 @@ export function TextoConTemas({ texto }: { texto: string }) {
     <>
       {segmentarMarcas(texto).map((segmento, i) =>
         segmento.tipo === "tema" ? (
-          <Link key={i} href={`/tema/${segmento.slug}`} className="tema-subrayado">
+          <Link key={i} href={`/tema/${segmento.slug}`} transitionTypes={["avanzar"]} className="tema-subrayado">
             {segmento.texto}
           </Link>
         ) : (

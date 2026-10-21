@@ -1,6 +1,5 @@
-import { Suspense } from "react";
 import { ContenidoTema } from "../../contenido-tema";
-import { EsqueletoTema } from "../../esqueleto-tema";
+import { TransicionPagina } from "../../transicion-pagina";
 
 /** El slug puede llegar codificado si alguien escribe la dirección con tildes. */
 function decodificar(slug: string): string {
@@ -13,10 +12,10 @@ function decodificar(slug: string): string {
 
 export default function Tema({ params }: PageProps<"/tema/[slug]">) {
   return (
-    <Suspense fallback={<EsqueletoTema />}>
+    <TransicionPagina>
       {params.then(({ slug }) => (
         <ContenidoTema slug={decodificar(slug)} />
       ))}
-    </Suspense>
+    </TransicionPagina>
   );
 }

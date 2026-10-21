@@ -23,7 +23,7 @@ export function PaginaGenerada({ ui, fuentes }: { ui: string; fuentes: FuentePag
   }
   return (
     <ProveedorFuentes value={fuentes}>
-      <article className="flex flex-col gap-6">{kit.render(value)}</article>
+      <article className="bloques flex flex-col gap-6">{kit.render(value)}</article>
     </ProveedorFuentes>
   );
 }
