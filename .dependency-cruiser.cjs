@@ -22,11 +22,13 @@ module.exports = {
     },
     {
       name: "aplicacion-solo-depende-de-dominio",
-      comment: "aplicacion/ depende de puertos (interfaces), no de implementaciones.",
+      comment:
+        "aplicacion/ depende de puertos (interfaces), no de implementaciones. " +
+        "Puede usar Skillet (@hashbrownai/core) para definir los contratos de salida de los agentes.",
       severity: "error",
       from: { path: "^src/aplicacion/", pathNot: noEsPrueba },
       to: {
-        pathNot: "^src/(dominio|aplicacion)/",
+        pathNot: ["^src/(dominio|aplicacion)/", "^node_modules/@hashbrownai/core/"],
         dependencyTypesNot: ["core"],
       },
     },

@@ -1,7 +1,15 @@
 import { createUiJsonSchema, s } from "@hashbrownai/core";
+import { esquemaMemoria, esquemaNotasFragmento } from "@/aplicacion/lectura/esquemas";
 import { infraccionesModoEstricto } from "./esquema-estricto";
 
 describe("infraccionesModoEstricto", () => {
+  it.each([
+    ["notas de fragmento", esquemaNotasFragmento],
+    ["memoria", esquemaMemoria],
+  ])("acepta el esquema de %s del Agente Lector (contrato con Groq)", (_, esquema) => {
+    expect(infraccionesModoEstricto(s.toJsonSchema(esquema))).toEqual([]);
+  });
+
   it("acepta el esquema de UI que genera Hashbrown (contrato con Groq)", () => {
     const esquema = createUiJsonSchema({
       components: [
