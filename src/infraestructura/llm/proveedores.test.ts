@@ -121,13 +121,18 @@ describe("ProveedorGroq", () => {
     [{ "x-ratelimit-reset-tokens": "1m2s" }, 62_000],
     [{ "x-ratelimit-reset-tokens": "raro" }, 15_000],
     [{}, 15_000],
-  ])("ante un 429 con %j lanza LimiteExcedido de %i ms", async (encabezados, esperado) => {
+  ])("ante un 429 con %j lanza LimiteExcedido de %i ms y lo registra", async (encabezados, esperado) => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
     const { proveedor } = groqCon(respuestaHttp(429, { error: { message: "límite" } }, encabezados));
 
     const error = await proveedor.generarJson(peticion).catch((e: unknown) => e);
 
     expect(error).toBeInstanceOf(LimiteExcedido);
     expect((error as LimiteExcedido).esperarMs).toBe(esperado);
+    expect(JSON.parse(vi.mocked(console.warn).mock.calls[0]![0])).toMatchObject({
+      evento: "llm-limite",
+      esperarMs: esperado,
+    });
   });
 
   it("traduce un 400 (JSON que no cumple el esquema) a RespuestaInvalida", async () => {

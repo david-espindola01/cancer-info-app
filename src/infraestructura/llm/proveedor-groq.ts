@@ -81,7 +81,10 @@ function esquemaParaGroq(original: Record<string, unknown>): Record<string, unkn
 
 function traducirError(error: unknown): never {
   if (error instanceof OpenAI.APIError && error.status === 429) {
-    throw new LimiteExcedido(esperaIndicada(error.headers) ?? ESPERA_POR_DEFECTO_MS);
+    const esperarMs = esperaIndicada(error.headers) ?? ESPERA_POR_DEFECTO_MS;
+    // Queda registrado para poder diagnosticar páginas que tardan en aparecer.
+    console.warn(JSON.stringify({ evento: "llm-limite", esperarMs, detalle: error.message }));
+    throw new LimiteExcedido(esperarMs);
   }
   if (error instanceof OpenAI.APIError && error.status === 400) {
     throw new RespuestaInvalida(error.message);

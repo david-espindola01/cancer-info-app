@@ -9,8 +9,11 @@ import { paginaSinInformacion, revisarPagina, salidaPagina } from "./pagina-ui";
 
 /** Cuántas memorias se usan como fuentes de una página (además del tope de caracteres). */
 const MAX_FUENTES = 3;
-/** Tope de tokens de la página generada (incluye el razonamiento del modelo). */
-const MAX_TOKENS_PRESENTADOR = 2_500;
+/**
+ * Tope de tokens de la página generada (incluye el razonamiento del modelo). Lo máximo
+ * observado con gpt-oss fue ~830; un tope ajustado reserva menos del límite por minuto.
+ */
+const MAX_TOKENS_PRESENTADOR = 2_000;
 /** Si la página cita una fuente inexistente, se pide una vez más antes de desistir. */
 const INTENTOS = 2;
 /** Cada cuánto vuelve a consultar el navegador si otro ya está generando la página. */

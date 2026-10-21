@@ -71,13 +71,50 @@ describe("precargarTemas", () => {
     expect(await deps.paginas.obtener("sol")).toBeNull();
   });
 
-  it("se detiene si la IA llega a su límite", async () => {
+  it("si la IA pide esperar poco, espera y reintenta el mismo tema", async () => {
+    let llamadas = 0;
     const { deps, presentador } = await preparar(() => {
-      throw new LimiteExcedido(5_000);
+      llamadas += 1;
+      if (llamadas === 1) throw new LimiteExcedido(12_000);
+      return PAGINA;
+    });
+    const esperar = vi.fn(async () => {});
+
+    expect(await precargarTemas(["tabaco"], deps, opciones, esperar)).toBe(1);
+    expect(esperar).toHaveBeenCalledWith(12_000);
+    expect(presentador.peticiones).toHaveLength(2);
+  });
+
+  it("se detiene si la IA sigue en su límite o pide esperar demasiado", async () => {
+    const siempreLimite = (ms: number) => () => {
+      throw new LimiteExcedido(ms);
+    };
+    const esperar = vi.fn(async () => {});
+
+    const corta = await preparar(siempreLimite(5_000));
+    expect(await precargarTemas(["tabaco", "dieta"], corta.deps, opciones, esperar)).toBe(0);
+    expect(corta.presentador.peticiones).toHaveLength(2);
+
+    const larga = await preparar(siempreLimite(60_000));
+    expect(await precargarTemas(["tabaco", "dieta"], larga.deps, opciones, esperar)).toBe(0);
+    expect(larga.presentador.peticiones).toHaveLength(1);
+    expect(esperar).toHaveBeenCalledTimes(1);
+  });
+
+  it("por defecto espera de verdad antes de reintentar", async () => {
+    vi.useFakeTimers();
+    let llamadas = 0;
+    const { deps } = await preparar(() => {
+      llamadas += 1;
+      if (llamadas === 1) throw new LimiteExcedido(1_000);
+      return PAGINA;
     });
 
-    expect(await precargarTemas(["tabaco", "dieta"], deps, opciones)).toBe(0);
-    expect(presentador.peticiones).toHaveLength(1);
+    const precarga = precargarTemas(["tabaco"], deps, opciones);
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    await expect(precarga).resolves.toBe(1);
+    vi.useRealTimers();
   });
 
   it("no cuenta las páginas que no se pudieron preparar", async () => {
