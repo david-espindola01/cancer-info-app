@@ -11,6 +11,27 @@ export type Segmento =
   | { tipo: "texto"; texto: string }
   | { tipo: "tema"; texto: string; slug: string };
 
+/**
+ * Marca la primera aparición de `tema` (como palabra completa, sin importar mayúsculas)
+ * fuera de las marcas existentes. Devuelve el texto nuevo, o null si no aparece.
+ */
+export function marcarPrimeraAparicion(texto: string, tema: string): string | null {
+  if (!normalizarSlug(tema)) return null;
+  const escapado = tema.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const patron = new RegExp(`(?<![\\p{L}\\p{N}])${escapado}(?![\\p{L}\\p{N}])`, "iu");
+
+  let marcado = false;
+  const partes = segmentarMarcas(texto).map((segmento) => {
+    if (segmento.tipo === "tema") return `[[${segmento.texto}|${segmento.slug}]]`;
+    if (marcado) return segmento.texto;
+    return segmento.texto.replace(patron, (encontrado) => {
+      marcado = true;
+      return `[[${encontrado}]]`;
+    });
+  });
+  return marcado ? partes.join("") : null;
+}
+
 export function segmentarMarcas(texto: string): Segmento[] {
   const segmentos: Segmento[] = [];
   let desde = 0;

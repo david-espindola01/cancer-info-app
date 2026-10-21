@@ -1,22 +1,6 @@
-import type { s } from "@hashbrownai/core";
 import type { Documento, EstadoDocumento, Fragmento } from "@/dominio/documento";
+import type { PaginaTema } from "@/dominio/pagina";
 import type { ContenidoMemoria, NotasFragmento } from "./lectura/esquemas";
-
-export interface PeticionJson<E extends s.HashbrownType> {
-  /** Nombre corto del esquema (lo exige la API de salida estructurada). */
-  nombre: string;
-  sistema: string;
-  usuario: string;
-  esquema: E;
-}
-
-/**
- * Un modelo de lenguaje que responde JSON que cumple un esquema.
- * Lanza `LimiteExcedido` o `RespuestaInvalida` (ver errores-llm.ts).
- */
-export interface ProveedorLLM {
-  generarJson<E extends s.HashbrownType>(peticion: PeticionJson<E>): Promise<s.Infer<E>>;
-}
 
 export interface NuevoDocumento {
   titulo: string;
@@ -43,6 +27,22 @@ export interface MemoriaEncontrada {
   documentoId: string;
   titulo: string;
   contenido: ContenidoMemoria;
+}
+
+export type NuevaPagina = Omit<PaginaTema, "estado" | "ui"> & { ui: string };
+
+export interface RepositorioPaginas {
+  obtener(slug: string): Promise<PaginaTema | null>;
+  /**
+   * Toma el turno para generar la página si nadie más lo tiene (o si quien lo tenía
+   * lleva demasiado tiempo). Devuelve false si otro ya la está generando.
+   * Conserva la versión anterior de la página para seguir sirviéndola mientras tanto.
+   */
+  reservar(slug: string, tema: string): Promise<boolean>;
+  /** Guarda la página generada y libera el turno. */
+  guardar(pagina: NuevaPagina): Promise<void>;
+  /** Libera el turno sin guardar (por ejemplo, si la IA alcanzó su límite). */
+  liberar(slug: string): Promise<void>;
 }
 
 export interface RepositorioMemorias {

@@ -14,8 +14,8 @@ const REGLAS_COMUNES = `Reglas:
 export const INSTRUCCIONES_NOTAS = `Eres un lector experto en artículos científicos de salud.
 Recibes UNA PARTE de un artículo. Extrae sus hallazgos, cifras, términos técnicos y limitaciones.
 - Cada hallazgo en una sola frase.
-- Cada cifra con su unidad y qué mide.
-- Cada término técnico con una explicación sencilla.
+- Cada cifra con su unidad y qué mide, como la entendería cualquiera («24 % menos riesgo», «1 de cada 8»). No copies medidas estadísticas como HR, OR, intervalos de confianza o valores p.
+- Cada término de salud con una explicación sencilla. No incluyas términos de estadística ni de métodos de investigación (cohorte, hazard ratio, MET, confusión residual).
 ${REGLAS_COMUNES}`;
 
 export const INSTRUCCIONES_MEMORIA = `Eres un divulgador científico de salud.

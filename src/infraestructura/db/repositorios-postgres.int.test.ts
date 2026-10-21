@@ -4,10 +4,12 @@ import { join } from "node:path";
 import { conexionPruebas, DIRECTORIO_MIGRACIONES, vaciarTablas } from "@/pruebas/bd";
 import { contratoRepositorioDocumentos } from "@/pruebas/contratos/repositorio-documentos.contrato";
 import { contratoRepositorioMemorias } from "@/pruebas/contratos/repositorio-memorias.contrato";
+import { contratoRepositorioPaginas } from "@/pruebas/contratos/repositorio-paginas.contrato";
 import { memoriaDePrueba, nuevoDocumento } from "@/pruebas/fabricas";
 import { migrar } from "./migrador";
 import { RepositorioDocumentosPostgres } from "./repositorio-documentos-postgres";
 import { RepositorioMemoriasPostgres } from "./repositorio-memorias-postgres";
+import { RepositorioPaginasPostgres } from "./repositorio-paginas-postgres";
 
 const sql = conexionPruebas();
 
@@ -36,6 +38,23 @@ describe("RepositorioMemoriasPostgres", () => {
     await memorias.guardar(documento.id, memoriaDePrueba({ resumenSencillo: "Los tumores crecen." }));
 
     expect(await memorias.buscar("tumor", 5)).toHaveLength(1);
+  });
+});
+
+describe("RepositorioPaginasPostgres", () => {
+  contratoRepositorioPaginas(async () => {
+    await vaciarTablas(sql);
+    return new RepositorioPaginasPostgres(sql);
+  });
+
+  it("considera abandonado un turno de más de 2 minutos", async () => {
+    await vaciarTablas(sql);
+    const repo = new RepositorioPaginasPostgres(sql);
+    await repo.reservar("tumor", "tumor");
+
+    await sql`update paginas set actualizada_en = now() - interval '3 minutes' where slug = 'tumor'`;
+
+    expect(await repo.reservar("tumor", "tumor")).toBe(true);
   });
 });
 

@@ -1,18 +1,11 @@
-import { s } from "@hashbrownai/core";
 import OpenAI from "openai";
 import { LimiteExcedido, RespuestaInvalida } from "@/aplicacion/errores-llm";
-import type { PeticionJson, ProveedorLLM } from "@/aplicacion/puertos";
+import type { PeticionJson, ProveedorLLM } from "@/aplicacion/puerto-llm";
 import { infraccionesModoEstricto } from "./esquema-estricto";
 
 const URL_GROQ = "https://api.groq.com/openai/v1";
 /** Si Groq no indica cuánto esperar tras un 429, se reintenta en este tiempo. */
 const ESPERA_POR_DEFECTO_MS = 15_000;
-/**
- * Tope de tokens de salida (incluye el razonamiento). Groq descuenta del límite por
- * minuto lo que se pide como máximo, así que un tope ajustado evita esperas inútiles.
- * Medido en la Fase 4 con gpt-oss-120b: notas ~1.300 tokens y memoria ~1.100 tokens.
- */
-const MAX_TOKENS_SALIDA = 3_000;
 
 export type EsfuerzoRazonamiento = "low" | "medium" | "high";
 
@@ -34,8 +27,9 @@ export class ProveedorGroq implements ProveedorLLM {
     this.cliente = new OpenAI({ apiKey: opciones.apiKey, baseURL: URL_GROQ, maxRetries: 0, fetch: opciones.fetch });
   }
 
-  async generarJson<E extends s.HashbrownType>(peticion: PeticionJson<E>): Promise<s.Infer<E>> {
-    const esquema = esquemaParaGroq(peticion.esquema);
+  async generarJson<T>(peticion: PeticionJson<T>): Promise<T> {
+    const { salida } = peticion;
+    const esquema = esquemaParaGroq(salida.jsonSchema);
     const inicio = Date.now();
 
     const respuesta = await this.cliente.chat.completions
@@ -43,14 +37,14 @@ export class ProveedorGroq implements ProveedorLLM {
         model: this.opciones.modelo,
         temperature: 0.2,
         reasoning_effort: this.opciones.esfuerzo,
-        max_completion_tokens: MAX_TOKENS_SALIDA,
+        max_completion_tokens: peticion.maxTokensSalida,
         messages: [
           { role: "system", content: peticion.sistema },
           { role: "user", content: peticion.usuario },
         ],
         response_format: {
           type: "json_schema",
-          json_schema: { name: peticion.nombre, strict: true, schema: esquema },
+          json_schema: { name: salida.nombre, strict: true, schema: esquema },
         },
       })
       .catch(traducirError);
@@ -59,18 +53,18 @@ export class ProveedorGroq implements ProveedorLLM {
       JSON.stringify({
         evento: "llm",
         modelo: this.opciones.modelo,
-        esquema: peticion.nombre,
+        esquema: salida.nombre,
         tokensEntrada: respuesta.usage?.prompt_tokens,
         tokensSalida: respuesta.usage?.completion_tokens,
         ms: Date.now() - inicio,
       }),
     );
-    return validar(respuesta.choices[0]?.message.content, peticion.esquema);
+    return validar(respuesta.choices[0]?.message.content, salida.validar);
   }
 }
 
-function esquemaParaGroq(esquema: s.HashbrownType): Record<string, unknown> {
-  const jsonSchema = { ...(s.toJsonSchema(esquema) as Record<string, unknown>) };
+function esquemaParaGroq(original: Record<string, unknown>): Record<string, unknown> {
+  const jsonSchema = { ...original };
   delete jsonSchema.$schema;
   const infracciones = infraccionesModoEstricto(jsonSchema);
   if (infracciones.length > 0) {
@@ -100,11 +94,9 @@ function esperaIndicada(encabezados: Headers | undefined): number | undefined {
   return Math.ceil((Number(partes[1] ?? 0) * 60 + Number(partes[2] ?? 0)) * 1000);
 }
 
-function validar<E extends s.HashbrownType>(contenido: string | null | undefined, esquema: E): s.Infer<E> {
+function validar<T>(contenido: string | null | undefined, validarSalida: (valor: unknown) => T): T {
   try {
-    const valor: unknown = JSON.parse(contenido ?? "");
-    esquema.validate(valor);
-    return valor as s.Infer<E>;
+    return validarSalida(JSON.parse(contenido ?? ""));
   } catch (error) {
     throw new RespuestaInvalida((error as Error).message);
   }

@@ -1,8 +1,16 @@
 import { LimiteExcedido, RespuestaInvalida } from "../errores-llm";
-import type { ProveedorLLM, RepositorioDocumentos, RepositorioMemorias } from "../puertos";
+import type { ProveedorLLM } from "../puerto-llm";
+import type { RepositorioDocumentos, RepositorioMemorias } from "../puertos";
 import { consolidarNotas } from "./consolidar-notas";
-import { esquemaMemoria, esquemaNotasFragmento } from "./esquemas";
+import { salidaMemoria, salidaNotas } from "./esquemas";
 import { comoDocumento, INSTRUCCIONES_MEMORIA, INSTRUCCIONES_NOTAS } from "./instrucciones";
+
+/**
+ * Tope de tokens de respuesta del Lector (incluye su razonamiento). Groq descuenta del
+ * límite por minuto lo que se pide como máximo: un tope ajustado evita esperas inútiles.
+ * Medido en la Fase 4 con gpt-oss-120b: notas ~1.300 tokens y memoria ~1.100 tokens.
+ */
+const MAX_TOKENS_LECTOR = 3_000;
 
 export interface DependenciasLectura {
   documentos: RepositorioDocumentos;
@@ -35,10 +43,10 @@ export async function procesarSiguientePaso(
     const fragmento = await documentos.siguienteFragmentoPendiente(documentoId);
     if (fragmento) {
       const notas = await lector.generarJson({
-        nombre: "notas_fragmento",
+        salida: salidaNotas,
         sistema: INSTRUCCIONES_NOTAS,
         usuario: comoDocumento(fragmento.texto),
-        esquema: esquemaNotasFragmento,
+        maxTokensSalida: MAX_TOKENS_LECTOR,
       });
       await documentos.guardarNotas(documentoId, fragmento.orden, notas);
       return { tipo: "avance", ...(await documentos.progreso(documentoId)) };
@@ -46,10 +54,10 @@ export async function procesarSiguientePaso(
 
     const notas = await documentos.listarNotas(documentoId);
     const memoria = await lector.generarJson({
-      nombre: "memoria_articulo",
+      salida: salidaMemoria,
       sistema: INSTRUCCIONES_MEMORIA,
       usuario: comoDocumento(consolidarNotas(documento.titulo, notas)),
-      esquema: esquemaMemoria,
+      maxTokensSalida: MAX_TOKENS_LECTOR,
     });
     await memorias.guardar(documentoId, memoria);
     await documentos.cambiarEstado(documentoId, "listo");

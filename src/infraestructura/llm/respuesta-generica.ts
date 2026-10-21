@@ -10,7 +10,7 @@ const PROFUNDIDAD_MAXIMA = 6;
  */
 export function respuestaDesdeEsquema(esquema: Esquema, texto: string): unknown {
   const frases = texto
-    .replace(/<\/?documento>/g, "")
+    .replace(/<\/?[a-z]+>/gi, "")
     .split(/(?<=[.!?])\s+|\n+/)
     .map((frase) => frase.trim())
     .filter((frase) => frase.length > 0);

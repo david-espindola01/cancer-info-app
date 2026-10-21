@@ -1,15 +1,9 @@
 "use client";
 
 import { createContext, use } from "react";
+import type { FuentePagina } from "@/dominio/pagina";
 
-/** Una fuente que respalda la página; el modelo solo la cita por su número. */
-export interface FuenteVista {
-  numero: number;
-  titulo: string;
-  referencia: string;
-}
-
-const ContextoFuentes = createContext<FuenteVista[]>([]);
+const ContextoFuentes = createContext<FuentePagina[]>([]);
 
 export const ProveedorFuentes = ContextoFuentes;
 

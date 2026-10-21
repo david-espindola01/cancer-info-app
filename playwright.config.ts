@@ -20,6 +20,8 @@ const entornoServidor = Object.fromEntries(
 
 export default defineConfig({
   testDir: "./e2e",
+  // La primera visita a cada página compila en modo desarrollo y puede tardar.
+  timeout: 60_000,
   forbidOnly: enCI,
   retries: enCI ? 1 : 0,
   // Las pruebas comparten la base de datos de pruebas.

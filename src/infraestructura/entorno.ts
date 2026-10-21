@@ -1,5 +1,9 @@
 type VariableObligatoria = "DATABASE_URL" | "ADMIN_CLAVE" | "SESION_SECRETO" | "GROQ_API_KEY";
-type VariableOpcional = "LLM_PROVEEDOR" | "GROQ_MODELO_LECTOR" | "GROQ_ESFUERZO_RAZONAMIENTO";
+type VariableOpcional =
+  | "LLM_PROVEEDOR"
+  | "GROQ_MODELO_LECTOR"
+  | "GROQ_MODELO_PRESENTADOR"
+  | "GROQ_ESFUERZO_RAZONAMIENTO";
 
 /**
  * Lee una variable de entorno obligatoria. Si falta, falla con un mensaje claro

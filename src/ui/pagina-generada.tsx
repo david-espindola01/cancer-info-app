@@ -1,14 +1,15 @@
 "use client";
 
 import { useJsonParser, useUiKit } from "@hashbrownai/react";
-import { ProveedorFuentes, type FuenteVista } from "./fuentes";
+import type { FuentePagina } from "@/dominio/pagina";
+import { ProveedorFuentes } from "./fuentes";
 import { componentesExpuestos } from "./kit";
 
 /**
  * Dibuja una página armada por el Agente Presentador: `ui` es su respuesta JSON
  * (`{ "ui": [...] }`), que se valida contra el catálogo antes de mostrarse.
  */
-export function PaginaGenerada({ ui, fuentes }: { ui: string; fuentes: FuenteVista[] }) {
+export function PaginaGenerada({ ui, fuentes }: { ui: string; fuentes: FuentePagina[] }) {
   const kit = useUiKit({ components: componentesExpuestos });
   const { value, error } = useJsonParser(ui, kit.schema);
 

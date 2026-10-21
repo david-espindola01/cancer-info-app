@@ -1,4 +1,32 @@
-import { segmentarMarcas } from "./marcas";
+import { marcarPrimeraAparicion, segmentarMarcas } from "./marcas";
+
+describe("marcarPrimeraAparicion", () => {
+  it("marca solo la primera aparición, como palabra completa y sin importar mayúsculas", () => {
+    expect(marcarPrimeraAparicion("El Ejercicio diario. Más ejercicio.", "ejercicio")).toBe(
+      "El [[Ejercicio]] diario. Más ejercicio.",
+    );
+  });
+
+  it("no marca dentro de otra palabra ni dentro de una marca existente", () => {
+    expect(marcarPrimeraAparicion("Los ejercicios y el [[ejercicio]]", "ejercicio")).toBeNull();
+  });
+
+  it("conserva las marcas existentes con su tema", () => {
+    expect(marcarPrimeraAparicion("Ver [[tumores|tumor]] y la dieta", "dieta")).toBe(
+      "Ver [[tumores|tumor]] y la [[dieta]]",
+    );
+  });
+
+  it("encuentra expresiones de varias palabras y respeta los signos alrededor", () => {
+    expect(marcarPrimeraAparicion("Sobre el cáncer de colon.", "cáncer de colon")).toBe("Sobre el [[cáncer de colon]].");
+    expect(marcarPrimeraAparicion("Factores (riesgo)", "factores")).toBe("[[Factores]] (riesgo)");
+  });
+
+  it("devuelve null si el tema no aparece o no tiene letras", () => {
+    expect(marcarPrimeraAparicion("Nada que ver", "tumor")).toBeNull();
+    expect(marcarPrimeraAparicion("¿?", "¿?")).toBeNull();
+  });
+});
 
 describe("segmentarMarcas", () => {
   it("convierte las palabras marcadas en temas enlazables", () => {

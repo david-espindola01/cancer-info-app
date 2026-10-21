@@ -35,7 +35,7 @@ export function SiguientesTemas({ temas }: { temas: { etiqueta: string; porQue: 
               className={`${estilos.tarjeta} flex items-center gap-3 hover:border-acento`}
             >
               <span className="flex-1">
-                <span className="block font-bold text-acento">{tema.etiqueta}</span>
+                <span className="block font-bold text-acento first-letter:uppercase">{tema.etiqueta}</span>
                 <span className="block text-base">{tema.porQue}</span>
               </span>
               <IconoFlecha />

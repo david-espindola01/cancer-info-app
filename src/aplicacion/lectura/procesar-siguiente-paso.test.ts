@@ -4,6 +4,7 @@ import { RepositorioDocumentosMemoria } from "@/infraestructura/memoria/reposito
 import { RepositorioMemoriasMemoria } from "@/infraestructura/memoria/repositorio-memorias-memoria";
 import { memoriaDePrueba, notasDePrueba, nuevoDocumento } from "@/pruebas/fabricas";
 import { LimiteExcedido } from "../errores-llm";
+import type { PeticionJson } from "../puerto-llm";
 import { procesarSiguientePaso, type DependenciasLectura } from "./procesar-siguiente-paso";
 
 function preparar(responder: ConstructorParameters<typeof ProveedorFalso>[0]) {
@@ -17,8 +18,8 @@ function preparar(responder: ConstructorParameters<typeof ProveedorFalso>[0]) {
 }
 
 /** Responde notas para cada fragmento y la memoria al consolidar. */
-const lectorCorrecto = ({ nombre, usuario }: { nombre: string; usuario: string }) =>
-  nombre === "notas_fragmento"
+const lectorCorrecto = ({ salida, usuario }: PeticionJson<unknown>) =>
+  salida.nombre === "notas_fragmento"
     ? notasDePrueba({ hallazgos: [`visto en ${usuario.includes("uno") ? "uno" : "dos"}`], datosDeCita: "García, 2024" })
     : memoriaDePrueba({ tituloSencillo: "Memoria final" });
 
@@ -35,7 +36,7 @@ describe("procesarSiguientePaso", () => {
     expect(await deps.documentos.obtener(documento.id)).toMatchObject({ estado: "listo", error: null });
     expect(await deps.memorias.versionCorpus()).toBe(1);
     const consolidacion = lector.peticiones[2]!;
-    expect(consolidacion.nombre).toBe("memoria_articulo");
+    expect(consolidacion.salida.nombre).toBe("memoria_articulo");
     expect(consolidacion.usuario).toContain("visto en uno");
     expect(consolidacion.usuario).toContain("visto en dos");
     expect(consolidacion.usuario).toContain("Datos de cita: García, 2024");

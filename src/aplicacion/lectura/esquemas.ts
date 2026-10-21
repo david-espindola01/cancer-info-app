@@ -1,4 +1,5 @@
 import { s } from "@hashbrownai/core";
+import { salidaSkillet } from "../salida-skillet";
 
 /*
  * Contratos de salida del Agente Lector. Cada esquema es a la vez el tipo de TypeScript,
@@ -53,4 +54,6 @@ export const esquemaMemoria = s.object("Memoria con lo fundamental del artículo
 });
 
 export type NotasFragmento = s.Infer<typeof esquemaNotasFragmento>;
+export const salidaNotas = salidaSkillet("notas_fragmento", esquemaNotasFragmento);
+export const salidaMemoria = salidaSkillet("memoria_articulo", esquemaMemoria);
 export type ContenidoMemoria = s.Infer<typeof esquemaMemoria>;

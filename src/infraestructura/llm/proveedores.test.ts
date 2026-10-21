@@ -1,11 +1,12 @@
 import { s } from "@hashbrownai/core";
 import { LimiteExcedido, RespuestaInvalida } from "@/aplicacion/errores-llm";
+import { salidaSkillet } from "@/aplicacion/salida-skillet";
 import { contratoProveedorLLM } from "@/pruebas/contratos/proveedor-llm.contrato";
 import { ProveedorFalso } from "./proveedor-falso";
 import { ProveedorGroq } from "./proveedor-groq";
 
 const esquema = s.object("Saludo", { texto: s.string("Un saludo") });
-const peticion = { nombre: "saludo", sistema: "Sé amable", usuario: "Hola", esquema };
+const peticion = { salida: salidaSkillet("saludo", esquema), sistema: "Sé amable", usuario: "Hola", maxTokensSalida: 3_000 };
 
 function respuestaHttp(estado: number, cuerpo: unknown, encabezados: Record<string, string> = {}) {
   return new Response(JSON.stringify(cuerpo), {
@@ -124,12 +125,9 @@ describe("ProveedorGroq", () => {
 
   it("no llama a Groq si el esquema no cumple el modo estricto", async () => {
     const { proveedor, fetchFalso } = groqCon();
-    const esquemaConUnion = s.object("Raíz", { valor: s.anyOf([s.string("a"), s.number("b")]) });
-    vi.spyOn(s, "toJsonSchema").mockReturnValueOnce({ type: "object", properties: { a: {} }, required: [] });
+    const salida = { ...peticion.salida, jsonSchema: { type: "object", properties: { a: {} }, required: [] } };
 
-    await expect(proveedor.generarJson({ ...peticion, esquema: esquemaConUnion })).rejects.toThrow(
-      /no cumple el modo estricto/,
-    );
+    await expect(proveedor.generarJson({ ...peticion, salida })).rejects.toThrow(/no cumple el modo estricto/);
     expect(fetchFalso).not.toHaveBeenCalled();
   });
 });

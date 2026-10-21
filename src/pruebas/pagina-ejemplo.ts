@@ -1,4 +1,4 @@
-import type { FuenteVista } from "@/ui/fuentes";
+import type { FuentePagina } from "@/dominio/pagina";
 
 /** Una página como la que arma el Agente Presentador, escrita a mano con todo el catálogo. */
 export const PAGINA_EJEMPLO = JSON.stringify({
@@ -67,7 +67,7 @@ export const PAGINA_EJEMPLO = JSON.stringify({
   ],
 });
 
-export const FUENTES_EJEMPLO: FuenteVista[] = [
+export const FUENTES_EJEMPLO: FuentePagina[] = [
   { numero: 1, titulo: "Estudio de población", referencia: "García L, 2024. Revista de Salud" },
   { numero: 2, titulo: "Otro estudio", referencia: "Pérez M, 2023" },
 ];

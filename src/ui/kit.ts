@@ -33,9 +33,9 @@ export const componentesExpuestos = [
   exposeComponent(PreguntasRespuestas, contratoPreguntasRespuestas),
   exposeComponent(Aviso, {
     ...contratoAviso,
-    // Skillet convierte la unión de `tipo` en una tupla cuyo orden cambia entre compiladores
-    // (tsc y next build); el valor es el mismo, solo se fija su tipo en esta compilación.
-    props: { ...contratoAviso.props, tipo: contratoAviso.props.tipo as s.Schema<TipoAviso> },
+    // Skillet convierte la unión de `tipo` en una tupla cuyo orden cambia de una compilación a
+    // otra; el valor es el mismo (lo cubren las pruebas de PaginaGenerada), solo se fija su tipo.
+    props: { ...contratoAviso.props, tipo: contratoAviso.props.tipo as unknown as s.Schema<TipoAviso> },
   }),
   exposeComponent(Fuentes, contratoFuentes),
   exposeComponent(SiguientesTemas, contratoSiguientesTemas),
