@@ -38,6 +38,13 @@ export class RepositorioMemoriasPostgres implements RepositorioMemorias {
     }));
   }
 
+  async temasMasFrecuentes(limite: number) {
+    const filas = await this.sql<{ tema: string }[]>`
+      select tema from memorias, jsonb_array_elements_text(contenido->'temas') tema
+      group by tema order by count(*) desc, tema limit ${limite}`;
+    return filas.map((fila) => fila.tema);
+  }
+
   async versionCorpus() {
     const [corpus] = await this.sql<{ version: number }[]>`select version from corpus`;
     return corpus!.version;

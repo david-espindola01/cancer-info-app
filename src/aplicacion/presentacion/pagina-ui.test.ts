@@ -134,10 +134,34 @@ describe("revisarPagina", () => {
     });
   });
 
-  it("deja tal cual una página sin información", () => {
+  it("deja tal cual una página sin información si no hay temas cubiertos que sugerir", () => {
     const pagina = paginaSinInformacion("algo raro");
 
     expect(revisarPagina(pagina, { fuentes, temas: [] }, "algo-raro")).toEqual({ pagina, palabrasClave: [] });
+  });
+
+  it("a una página sin información le sugiere hasta 4 temas cubiertos, sin el actual ni repetidos", () => {
+    const temas = ["Tabaco", "tabaco", "algo raro", "dieta", "sol", "alcohol", "sueño"];
+
+    const { pagina, palabrasClave } = revisarPagina(paginaSinInformacion("algo raro"), { fuentes, temas }, "algo-raro");
+
+    expect(pagina.ui[2]).toEqual({
+      SiguientesTemas: {
+        props: {
+          temas: ["Tabaco", "dieta", "sol", "alcohol"].map((etiqueta) => ({
+            etiqueta,
+            porQue: "Sobre esto sí tenemos información.",
+          })),
+        },
+      },
+    });
+    expect(palabrasClave).toEqual(["tabaco", "dieta", "sol", "alcohol"]);
+  });
+
+  it("respeta las sugerencias si el modelo ya las puso en la página sin información", () => {
+    const pagina: UiPagina = { ui: [{ SinInformacion: { props: { mensaje: "m" } } }, siguientes] };
+
+    expect(revisarPagina(pagina, { fuentes, temas: ["tabaco"] }, "x").pagina).toEqual(pagina);
   });
 });
 

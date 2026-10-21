@@ -41,6 +41,17 @@ export class RepositorioMemoriasMemoria implements RepositorioMemorias {
       .map(({ memoria }) => memoria);
   }
 
+  async temasMasFrecuentes(limite: number) {
+    const conteo = new Map<string, number>();
+    for (const { temas } of this.memorias.values()) {
+      for (const tema of temas) conteo.set(tema, (conteo.get(tema) ?? 0) + 1);
+    }
+    return [...conteo]
+      .sort(([a, n], [b, m]) => m - n || a.localeCompare(b))
+      .slice(0, limite)
+      .map(([tema]) => tema);
+  }
+
   async versionCorpus() {
     return this.version;
   }

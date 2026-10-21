@@ -78,14 +78,19 @@ describe("obtenerPaginaTema", () => {
     expect(await obtenerPaginaTema("tumor", deps)).toMatchObject({ tipo: "lista", desactualizada: true });
   });
 
-  it("sin fuentes sobre el tema, guarda una página sin información sin llamar a la IA", async () => {
+  it("sin fuentes sobre el tema, guarda sin llamar a la IA una página que sugiere temas cubiertos", async () => {
     const { deps, presentador } = await preparar();
 
     const resultado = await obtenerPaginaTema("fútbol", deps);
 
     expect(resultado.tipo === "lista" && JSON.parse(resultado.pagina.ui)).toMatchObject({
-      ui: [{ Encabezado: { props: { titulo: "Futbol" } } }, { SinInformacion: {} }],
+      ui: [
+        { Encabezado: { props: { titulo: "Futbol" } } },
+        { SinInformacion: {} },
+        { SiguientesTemas: { props: { temas: [{ etiqueta: "células" }] } } },
+      ],
     });
+    expect(resultado.tipo === "lista" && resultado.pagina.palabrasClave).toEqual(["celulas"]);
     expect(presentador.peticiones).toHaveLength(0);
   });
 

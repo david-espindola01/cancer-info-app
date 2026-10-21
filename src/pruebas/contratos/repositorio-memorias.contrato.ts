@@ -58,6 +58,15 @@ export function contratoRepositorioMemorias(crear: () => Promise<Repositorios>) 
     expect((await repos.memorias.buscar("melanoma radiación", 1)).map((m) => m.documentoId)).toEqual([ambos]);
   });
 
+  it("lista los temas que más memorias cubren, del más al menos frecuente", async () => {
+    for (const temas of [["tabaco", "pulmón"], ["tabaco", "dieta"], ["dieta", "tabaco", "sol"]]) {
+      const { documento } = await repos.documentos.registrar(nuevoDocumento());
+      await repos.memorias.guardar(documento.id, memoriaDePrueba({ temas }));
+    }
+
+    expect(await repos.memorias.temasMasFrecuentes(3)).toEqual(["tabaco", "dieta", "pulmón"]);
+  });
+
   it("devuelve vacío si la consulta no tiene palabras útiles", async () => {
     await documentoConMemoria("A", "texto");
 

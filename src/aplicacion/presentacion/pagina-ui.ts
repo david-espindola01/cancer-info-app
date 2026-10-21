@@ -64,7 +64,12 @@ export function revisarPagina(
   if (invalida !== undefined) throw new RespuestaInvalida(`cita la fuente ${invalida}, que no existe`);
 
   if (componentes.some(([nombre]) => nombre === contratoSinInformacion.name)) {
-    return { pagina, palabrasClave: [] };
+    // Nunca un callejón sin salida: se sugieren temas que sí están cubiertos.
+    const ui = structuredClone(pagina.ui);
+    const sugeridos = componentes.some(([nombre]) => nombre === contratoSiguientesTemas.name);
+    const sugerencia = sugerirTemas(material.temas, slugActual);
+    if (!sugeridos && sugerencia) ui.push(sugerencia);
+    return { pagina: { ui }, palabrasClave: temasDestino([...recorrer(ui)], slugActual) };
   }
 
   const ui = structuredClone(pagina.ui);
@@ -124,6 +129,24 @@ function textosDeLectura(ui: Nodo[]): { valor: () => string; cambiar: (nuevo: st
     }
     return [];
   });
+}
+
+/** Cuántos temas cubiertos se sugieren cuando no hay información sobre el pedido. */
+const MAX_SUGERENCIAS = 4;
+
+function sugerirTemas(temas: string[], slugActual: string): Nodo | null {
+  const vistos = new Set([slugActual]);
+  const elegidos = temas.filter((tema) => {
+    const slug = normalizarSlug(tema);
+    if (!slug || vistos.has(slug)) return false;
+    vistos.add(slug);
+    return true;
+  });
+  if (elegidos.length === 0) return null;
+  const temasSugeridos = elegidos
+    .slice(0, MAX_SUGERENCIAS)
+    .map((etiqueta) => ({ etiqueta, porQue: "Sobre esto sí tenemos información." }));
+  return { [contratoSiguientesTemas.name]: { props: { temas: temasSugeridos } } };
 }
 
 /** La página que se muestra, sin llamar a la IA, cuando ninguna fuente trata el tema. */

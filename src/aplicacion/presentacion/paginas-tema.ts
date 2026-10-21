@@ -9,6 +9,8 @@ import { paginaSinInformacion, revisarPagina, salidaPagina } from "./pagina-ui";
 
 /** Cuántas memorias se usan como fuentes de una página (además del tope de caracteres). */
 const MAX_FUENTES = 3;
+/** Cuántos temas cubiertos se ofrecen cuando no hay información sobre el tema pedido. */
+const TEMAS_SUGERIDOS = 5;
 /**
  * Tope de tokens de la página generada (incluye el razonamiento del modelo). Lo máximo
  * observado con gpt-oss fue ~830; un tope ajustado reserva menos del límite por minuto.
@@ -84,7 +86,7 @@ export async function generarPaginaTema(slug: string, deps: DependenciasPresenta
     const contenido =
       encontradas.length > 0
         ? await presentar(slug, tema, encontradas, deps.presentador)
-        : { ui: JSON.stringify(paginaSinInformacion(tema)), fuentes: [], palabrasClave: [] };
+        : await sinInformacion(slug, tema, deps.memorias);
 
     const nueva: NuevaPagina = { slug, tema, versionCorpus, ...contenido };
     await deps.paginas.guardar(nueva);
@@ -95,6 +97,13 @@ export async function generarPaginaTema(slug: string, deps: DependenciasPresenta
     if (error instanceof RespuestaInvalida) return { tipo: "error" };
     throw error;
   }
+}
+
+/** Página sin llamar a la IA, que sugiere los temas que más artículos cubren. */
+async function sinInformacion(slug: string, tema: string, memorias: RepositorioMemorias) {
+  const temas = await memorias.temasMasFrecuentes(TEMAS_SUGERIDOS);
+  const { pagina, palabrasClave } = revisarPagina(paginaSinInformacion(tema), { fuentes: [], temas }, slug);
+  return { ui: JSON.stringify(pagina), fuentes: [], palabrasClave };
 }
 
 async function presentar(slug: string, tema: string, encontradas: MemoriaEncontrada[], presentador: ProveedorLLM) {

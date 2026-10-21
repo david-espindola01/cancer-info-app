@@ -68,5 +68,7 @@ export interface RepositorioMemorias {
   guardar(documentoId: string, contenido: ContenidoMemoria): Promise<number>;
   /** Memorias relacionadas con la consulta, de la más a la menos relevante. */
   buscar(consulta: string, limite: number): Promise<MemoriaEncontrada[]>;
+  /** Los temas que más memorias cubren (para sugerir por dónde seguir). */
+  temasMasFrecuentes(limite: number): Promise<string[]>;
   versionCorpus(): Promise<number>;
 }
