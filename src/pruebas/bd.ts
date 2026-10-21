@@ -24,6 +24,6 @@ function urlBdPruebas(): string {
 export const conexionPruebas = (): Sql => crearConexion(urlBdPruebas());
 
 export async function vaciarTablas(sql: Sql): Promise<void> {
-  await sql`truncate documentos, memorias, paginas, uso_ia cascade`;
+  await sql`truncate documentos, memorias, paginas, uso_ia, limite_peticiones cascade`;
   await sql`update corpus set version = 0`;
 }

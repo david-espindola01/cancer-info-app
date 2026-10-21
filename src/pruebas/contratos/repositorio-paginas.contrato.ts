@@ -46,6 +46,14 @@ export function contratoRepositorioPaginas(crear: () => Promise<RepositorioPagin
     expect(await repo.obtener("tumor")).toMatchObject({ estado: "generando", ui: '{"ui":[]}', versionCorpus: 3 });
   });
 
+  it("cuenta solo las páginas que se pueden servir", async () => {
+    await repo.reservar("tumor", "tumor");
+    await repo.guardar(paginaDePrueba());
+    await repo.reservar("dieta", "dieta");
+
+    expect(await repo.contarListas()).toBe(1);
+  });
+
   it("al liberar sin guardar marca el error, conserva lo anterior y permite reintentar", async () => {
     await repo.reservar("tumor", "tumor");
     await repo.guardar(paginaDePrueba());

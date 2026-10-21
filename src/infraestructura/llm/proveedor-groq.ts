@@ -16,6 +16,8 @@ export interface OpcionesGroq {
   esfuerzo: EsfuerzoRazonamiento;
   /** Para pruebas: reemplaza el fetch global. */
   fetch?: typeof fetch;
+  /** Se avisa cuántos tokens gastó cada llamada (para el panel de uso). Si falla, no interrumpe nada. */
+  alRegistrarUso?: (uso: { modelo: string; tokens: number }) => Promise<void>;
 }
 
 /** Proveedor LLM sobre Groq con salida estructurada en modo estricto. */
@@ -49,15 +51,19 @@ export class ProveedorGroq implements ProveedorLLM {
       })
       .catch(traducirError);
 
+    const { modelo, alRegistrarUso } = this.opciones;
     console.info(
       JSON.stringify({
         evento: "llm",
-        modelo: this.opciones.modelo,
+        modelo,
         esquema: salida.nombre,
         tokensEntrada: respuesta.usage?.prompt_tokens,
         tokensSalida: respuesta.usage?.completion_tokens,
         ms: Date.now() - inicio,
       }),
+    );
+    await alRegistrarUso?.({ modelo, tokens: respuesta.usage?.total_tokens ?? 0 }).catch((error: unknown) =>
+      console.error(JSON.stringify({ evento: "uso-llm-no-registrado", modelo, error: String(error) })),
     );
     return validar(respuesta.choices[0]?.message.content, salida.validar);
   }

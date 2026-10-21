@@ -26,6 +26,14 @@ export function contratoPresupuestoDiario(crear: () => Promise<PresupuestoDiario
     expect(await presupuesto.consumir("precarga", 0)).toBe(false);
   });
 
+  it("suma cantidades sin tope y resume el uso de hoy por motivo", async () => {
+    await presupuesto.sumar("tokens:modelo-a", 1_200);
+    await presupuesto.sumar("tokens:modelo-a", 800);
+    await presupuesto.consumir("precarga", 5);
+
+    expect(await presupuesto.usoDeHoy()).toEqual({ precarga: 1, "tokens:modelo-a": 2_000 });
+  });
+
   it("no se pasa del máximo aunque se pida muchas veces a la vez", async () => {
     const usos = await Promise.all(Array.from({ length: 10 }, () => presupuesto.consumir("precarga", 4)));
 

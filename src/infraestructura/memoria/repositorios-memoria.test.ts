@@ -1,7 +1,9 @@
+import { contratoLimitadorPeticiones } from "@/pruebas/contratos/limitador-peticiones.contrato";
 import { contratoPresupuestoDiario } from "@/pruebas/contratos/presupuesto-diario.contrato";
 import { contratoRepositorioDocumentos } from "@/pruebas/contratos/repositorio-documentos.contrato";
 import { contratoRepositorioMemorias } from "@/pruebas/contratos/repositorio-memorias.contrato";
 import { contratoRepositorioPaginas } from "@/pruebas/contratos/repositorio-paginas.contrato";
+import { LimitadorPeticionesMemoria } from "./limitador-peticiones-memoria";
 import { PresupuestoDiarioMemoria } from "./presupuesto-diario-memoria";
 import { RepositorioDocumentosMemoria } from "./repositorio-documentos-memoria";
 import { RepositorioMemoriasMemoria } from "./repositorio-memorias-memoria";
@@ -52,5 +54,20 @@ describe("PresupuestoDiarioMemoria", () => {
     hoy = "2026-10-22";
 
     expect(await presupuesto.consumir("precarga", 1)).toBe(true);
+  });
+});
+
+describe("LimitadorPeticionesMemoria", () => {
+  contratoLimitadorPeticiones(async () => new LimitadorPeticionesMemoria());
+
+  it("al vencer la ventana vuelve a permitir", async () => {
+    let ahora = 0;
+    const limitador = new LimitadorPeticionesMemoria(() => ahora);
+    await limitador.permitir("a", 1, 60);
+    expect(await limitador.permitir("a", 1, 60)).toBe(false);
+
+    ahora = 60_000;
+
+    expect(await limitador.permitir("a", 1, 60)).toBe(true);
   });
 });

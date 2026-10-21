@@ -4,7 +4,7 @@ import { RepositorioMemoriasMemoria } from "@/infraestructura/memoria/repositori
 import { RepositorioPaginasMemoria } from "@/infraestructura/memoria/repositorio-paginas-memoria";
 import { memoriaDePrueba, nuevoDocumento } from "@/pruebas/fabricas";
 import { LimiteExcedido } from "../errores-llm";
-import { generarPaginaTema, obtenerPaginaTema, type DependenciasPresentacion } from "./paginas-tema";
+import { generarPaginaTema, obtenerPaginaTema, type DependenciasVisita } from "./paginas-tema";
 
 const PAGINA_VALIDA = {
   ui: [
@@ -21,7 +21,12 @@ async function preparar(responder: ConstructorParameters<typeof ProveedorFalso>[
   const { documento } = await documentos.registrar(nuevoDocumento({ titulo: "Estudio" }));
   await memorias.guardar(documento.id, memoriaDePrueba({ resumenSencillo: "Un tumor es una masa de células." }));
   const presentador = new ProveedorFalso(responder);
-  const deps: DependenciasPresentacion = { paginas: new RepositorioPaginasMemoria(), memorias, presentador };
+  const deps: DependenciasVisita = {
+    paginas: new RepositorioPaginasMemoria(),
+    memorias,
+    presentador,
+    permitirGeneracion: async () => true,
+  };
   return { deps, presentador, memorias, documentoId: documento.id };
 }
 
@@ -127,6 +132,16 @@ describe("obtenerPaginaTema", () => {
 
     await expect(obtenerPaginaTema("tumor", deps)).rejects.toThrow("red caída");
     expect(await deps.paginas.reservar("tumor", "tumor")).toBe(true);
+  });
+
+  it("si el visitante superó su límite de páginas nuevas, no genera, pero sí sirve las guardadas", async () => {
+    const { deps, presentador } = await preparar();
+    await obtenerPaginaTema("tumor", deps);
+    const sinPermiso = { ...deps, permitirGeneracion: async () => false };
+
+    expect(await obtenerPaginaTema("dieta", sinPermiso)).toEqual({ tipo: "limite" });
+    expect(await obtenerPaginaTema("tumor", sinPermiso)).toMatchObject({ tipo: "lista" });
+    expect(presentador.peticiones).toHaveLength(1);
   });
 
   it("rechaza un tema sin letras ni números", async () => {

@@ -10,6 +10,7 @@ vi.mock("@/infraestructura/contenedor", () => ({
   temas: { obtener: vi.fn(), regenerar: vi.fn(), precargar: vi.fn() },
 }));
 vi.mock("next/server", () => ({ after: vi.fn(), connection: vi.fn(async () => {}) }));
+vi.mock("next/headers", () => ({ headers: async () => new Headers({ "x-forwarded-for": "190.1.2.3, 10.0.0.1" }) }));
 const refrescar = vi.fn();
 vi.mock("next/navigation", () => ({
   notFound: vi.fn(() => {
@@ -70,6 +71,13 @@ describe("ContenidoTema", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Estamos preparando esta información");
     await act(() => vi.advanceTimersByTimeAsync(3_000));
     expect(refrescar).toHaveBeenCalledTimes(1);
+  });
+
+  it("identifica al visitante por su IP para aplicar su límite de páginas nuevas", async () => {
+    await mostrar({ tipo: "limite" });
+
+    expect(temas.obtener).toHaveBeenCalledWith("tumor", "190.1.2.3");
+    expect(screen.getByRole("alert")).toHaveTextContent("Pediste muchas páginas nuevas en poco tiempo.");
   });
 
   it("informa si no se pudo preparar la página", async () => {

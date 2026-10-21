@@ -1,7 +1,25 @@
-import { claveCorrecta, crearTokenSesion, DURACION_SESION_SEGUNDOS, tokenSesionValido } from "./sesion";
+import {
+  claveCorrecta,
+  crearTokenSesion,
+  DURACION_SESION_SEGUNDOS,
+  huellaVisitante,
+  tokenSesionValido,
+} from "./sesion";
 
 const SECRETO = "secreto-de-prueba-suficientemente-largo";
 const AHORA = 1_800_000_000_000;
+
+describe("huellaVisitante", () => {
+  it("es estable para la misma IP, distinta entre IPs y no contiene la IP", () => {
+    const huella = huellaVisitante("190.24.10.5", SECRETO);
+
+    expect(huellaVisitante("190.24.10.5", SECRETO)).toBe(huella);
+    expect(huellaVisitante("190.24.10.6", SECRETO)).not.toBe(huella);
+    expect(huellaVisitante("190.24.10.5", "otro-secreto")).not.toBe(huella);
+    expect(huella).not.toContain("190");
+    expect(huella).toHaveLength(22);
+  });
+});
 
 describe("claveCorrecta", () => {
   it("acepta solo la clave exacta, aunque tengan distinto largo", () => {

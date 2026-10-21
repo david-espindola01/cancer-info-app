@@ -4,6 +4,8 @@ import { extraerTextoPdf } from "./extraer-texto-pdf";
 import { PanelSubida } from "./panel-subida";
 
 vi.mock("./extraer-texto-pdf", () => ({ extraerTextoPdf: vi.fn() }));
+// El panel de uso hace su propia consulta; tiene sus pruebas en panel-uso.test.tsx.
+vi.mock("./panel-uso", () => ({ PanelUso: () => null }));
 
 const documento: DocumentoVista = {
   id: "1",

@@ -56,6 +56,12 @@ export class RepositorioPaginasPostgres implements RepositorioPaginas {
       where slug = ${pagina.slug}`;
   }
 
+  async contarListas() {
+    const [fila] = await this.sql<{ total: number }[]>`
+      select count(*)::int as total from paginas where ui is not null`;
+    return fila!.total;
+  }
+
   async liberar(slug: string) {
     await this.sql`update paginas set estado = 'error', actualizada_en = now() where slug = ${slug}`;
   }

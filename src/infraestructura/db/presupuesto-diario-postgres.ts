@@ -14,4 +14,16 @@ export class PresupuestoDiarioPostgres implements PresupuestoDiario {
       returning cantidad`;
     return filas.length > 0;
   }
+
+  async sumar(motivo: string, cantidad: number) {
+    await this.sql`
+      insert into uso_ia (motivo, cantidad) values (${motivo}, ${cantidad})
+      on conflict (dia, motivo) do update set cantidad = uso_ia.cantidad + excluded.cantidad`;
+  }
+
+  async usoDeHoy() {
+    const filas = await this.sql<{ motivo: string; cantidad: number }[]>`
+      select motivo, cantidad from uso_ia where dia = current_date order by motivo`;
+    return Object.fromEntries(filas.map((fila) => [fila.motivo, fila.cantidad]));
+  }
 }

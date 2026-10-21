@@ -3,6 +3,14 @@ import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 export const NOMBRE_COOKIE_SESION = "sesion_admin";
 export const DURACION_SESION_SEGUNDOS = 12 * 60 * 60;
 
+/**
+ * Identifica a un visitante sin guardar su IP: una huella HMAC que no se puede revertir
+ * (sirve para limitar peticiones por visitante sin conservar datos personales).
+ */
+export function huellaVisitante(ip: string, secreto: string): string {
+  return createHmac("sha256", secreto).update(`visitante:${ip}`).digest("base64url").slice(0, 22);
+}
+
 /** Compara la clave ingresada con la esperada en tiempo constante. */
 export function claveCorrecta(ingresada: string, esperada: string): boolean {
   return timingSafeEqual(resumen(ingresada), resumen(esperada));

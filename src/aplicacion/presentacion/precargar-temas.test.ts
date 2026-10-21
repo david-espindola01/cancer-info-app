@@ -25,6 +25,7 @@ async function preparar(responder: ConstructorParameters<typeof ProveedorFalso>[
     memorias,
     presentador,
     presupuesto: new PresupuestoDiarioMemoria(),
+    permitirGeneracion: async () => true,
   };
   return { deps, presentador, memorias, documentoId: documento.id };
 }

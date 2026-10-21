@@ -1,7 +1,9 @@
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { after, connection } from "next/server";
 import { temas } from "@/infraestructura/contenedor";
 import { PaginaGenerada } from "@/ui/pagina-generada";
+import { ipVisitante } from "../ip-visitante";
 import { EsperaTema } from "./espera-tema";
 
 /**
@@ -11,7 +13,7 @@ import { EsperaTema } from "./espera-tema";
 export async function ContenidoTema({ slug }: { slug: string }) {
   // Siempre al momento de la petición: nunca se consulta la base ni la IA al compilar.
   await connection();
-  const resultado = await temas.obtener(slug);
+  const resultado = await temas.obtener(slug, ipVisitante(await headers()));
 
   switch (resultado.tipo) {
     case "no-valido":
@@ -20,6 +22,13 @@ export async function ContenidoTema({ slug }: { slug: string }) {
       return (
         <p role="alert" className="font-semibold">
           No pudimos preparar esta página ahora. Intenta de nuevo en unos minutos.
+        </p>
+      );
+    case "limite":
+      return (
+        <p role="alert" className="font-semibold">
+          Pediste muchas páginas nuevas en poco tiempo. Espera unos minutos y vuelve a intentarlo; mientras tanto
+          puedes seguir leyendo las páginas que ya están listas.
         </p>
       );
     case "preparando":

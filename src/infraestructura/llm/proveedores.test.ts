@@ -90,6 +90,31 @@ describe("ProveedorGroq", () => {
     });
   });
 
+  it("avisa los tokens usados y sigue aunque registrarlos falle", async () => {
+    const usos: unknown[] = [];
+    const respuestas = [respuestaHttp(200, completion('{"texto":"a"}')), respuestaHttp(200, completion('{"texto":"b"}'))];
+    const fetchFalso = vi.fn<typeof fetch>(async () => respuestas.shift()!);
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    let fallar = false;
+    const proveedor = new ProveedorGroq({
+      apiKey: "clave",
+      modelo: "m",
+      esfuerzo: "low",
+      fetch: fetchFalso,
+      alRegistrarUso: async (uso) => {
+        if (fallar) throw new Error("base caída");
+        usos.push(uso);
+      },
+    });
+
+    await proveedor.generarJson(peticion);
+    fallar = true;
+
+    await expect(proveedor.generarJson(peticion)).resolves.toEqual({ texto: "b" });
+    expect(usos).toEqual([{ modelo: "m", tokens: 15 }]);
+    expect(console.error).toHaveBeenCalledWith(expect.stringContaining("uso-llm-no-registrado"));
+  });
+
   it.each([
     [{ "retry-after": "7" }, 7_000],
     [{ "x-ratelimit-reset-tokens": "11.6s" }, 11_600],

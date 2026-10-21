@@ -33,14 +33,19 @@ type ResultadoGeneracion =
 export type ResultadoTema =
   | { tipo: "lista"; pagina: PaginaLista; desactualizada: boolean }
   | { tipo: "preparando"; reintentarMs: number }
+  | { tipo: "limite" }
   | { tipo: "error" }
   | { tipo: "no-valido" };
 
+/** Para servir páginas: además decide si este visitante puede pedir una página nueva ahora. */
+export type DependenciasVisita = DependenciasPresentacion & { permitirGeneracion: () => Promise<boolean> };
+
 /**
  * La página de un tema: la guardada si existe (avisando si quedó desactualizada para
- * regenerarla aparte) o una recién generada. Nunca genera dos veces la misma página a la vez.
+ * regenerarla aparte) o una recién generada, si el visitante no superó su límite de páginas
+ * nuevas. Nunca genera dos veces la misma página a la vez.
  */
-export async function obtenerPaginaTema(entrada: string, deps: DependenciasPresentacion): Promise<ResultadoTema> {
+export async function obtenerPaginaTema(entrada: string, deps: DependenciasVisita): Promise<ResultadoTema> {
   const slug = normalizarSlug(entrada);
   if (!slug) return { tipo: "no-valido" };
 
@@ -50,6 +55,7 @@ export async function obtenerPaginaTema(entrada: string, deps: DependenciasPrese
     const desactualizada = guardada.versionCorpus !== version && guardada.estado !== "generando";
     return { tipo: "lista", pagina: { ...guardada, ui: guardada.ui }, desactualizada };
   }
+  if (!(await deps.permitirGeneracion())) return { tipo: "limite" };
 
   const resultado = await generarPaginaTema(slug, deps);
   switch (resultado.tipo) {

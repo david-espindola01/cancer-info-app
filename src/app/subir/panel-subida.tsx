@@ -6,6 +6,7 @@ import { pedirDocumentos } from "./cliente-api";
 import { FormularioAcceso } from "./formulario-acceso";
 import { leerDocumento } from "./leer-documento";
 import { ListaDocumentos, type Actividad } from "./lista-documentos";
+import { PanelUso } from "./panel-uso";
 import { SelectorPdf } from "./selector-pdf";
 
 type Estado =
@@ -72,6 +73,7 @@ export function PanelSubida() {
           <SelectorPdf alSubir={cargar} />
           <h2 className="mt-8 text-xl font-bold">Artículos</h2>
           <ListaDocumentos documentos={estado.documentos} actividad={actividad} alReintentar={leer} />
+          <PanelUso version={estado.documentos.map((d) => d.estado).join()} />
         </>
       );
   }

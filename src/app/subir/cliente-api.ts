@@ -33,6 +33,17 @@ export async function pedirSesion(clave: string): Promise<string | null> {
   return respuesta.ok ? null : mensajeDeError(respuesta);
 }
 
+export interface EstadoSistema {
+  usoHoy: Record<string, number>;
+  paginasListas: number;
+}
+
+/** Uso de la IA hoy y páginas listas; null si no se pudo consultar. */
+export async function pedirEstado(): Promise<EstadoSistema | null> {
+  const respuesta = await fetch("/api/estado", { cache: "no-store" });
+  return respuesta.ok ? respuesta.json() : null;
+}
+
 /** Pide al servidor que avance un paso en la lectura de un documento. */
 export async function pedirPaso(id: string): Promise<ResultadoPasoVista> {
   const respuesta = await fetch(`/api/documentos/${id}/paso`, { method: "POST" });

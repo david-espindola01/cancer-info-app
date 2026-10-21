@@ -2,11 +2,13 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { conexionPruebas, DIRECTORIO_MIGRACIONES, vaciarTablas } from "@/pruebas/bd";
+import { contratoLimitadorPeticiones } from "@/pruebas/contratos/limitador-peticiones.contrato";
 import { contratoPresupuestoDiario } from "@/pruebas/contratos/presupuesto-diario.contrato";
 import { contratoRepositorioDocumentos } from "@/pruebas/contratos/repositorio-documentos.contrato";
 import { contratoRepositorioMemorias } from "@/pruebas/contratos/repositorio-memorias.contrato";
 import { contratoRepositorioPaginas } from "@/pruebas/contratos/repositorio-paginas.contrato";
 import { memoriaDePrueba, nuevoDocumento } from "@/pruebas/fabricas";
+import { LimitadorPeticionesPostgres } from "./limitador-peticiones-postgres";
 import { migrar } from "./migrador";
 import { PresupuestoDiarioPostgres } from "./presupuesto-diario-postgres";
 import { RepositorioDocumentosPostgres } from "./repositorio-documentos-postgres";
@@ -64,6 +66,25 @@ describe("PresupuestoDiarioPostgres", () => {
   contratoPresupuestoDiario(async () => {
     await vaciarTablas(sql);
     return new PresupuestoDiarioPostgres(sql);
+  });
+});
+
+describe("LimitadorPeticionesPostgres", () => {
+  contratoLimitadorPeticiones(async () => {
+    await vaciarTablas(sql);
+    return new LimitadorPeticionesPostgres(sql);
+  });
+
+  it("al vencer la ventana vuelve a permitir", async () => {
+    await vaciarTablas(sql);
+    const limitador = new LimitadorPeticionesPostgres(sql);
+    await limitador.permitir("a", 1, 60);
+    expect(await limitador.permitir("a", 1, 60)).toBe(false);
+
+    await sql`update limite_peticiones set ventana_inicio = now() - interval '61 seconds' where clave = 'a'`;
+
+    expect(await limitador.permitir("a", 1, 60)).toBe(true);
+    expect(await limitador.permitir("a", 1, 60)).toBe(false);
   });
 });
 

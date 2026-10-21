@@ -43,12 +43,24 @@ export interface RepositorioPaginas {
   guardar(pagina: NuevaPagina): Promise<void>;
   /** Libera el turno sin guardar (por ejemplo, si la IA alcanzó su límite). */
   liberar(slug: string): Promise<void>;
+  /** Cuántas páginas hay listas para servir. */
+  contarListas(): Promise<number>;
 }
 
-/** Presupuesto diario de usos de la IA por motivo (se reinicia cada día). */
+/** Límite de peticiones por clave (por ejemplo, por visitante) en una ventana de tiempo. */
+export interface LimitadorPeticiones {
+  /** Cuenta una petición si no se superó el máximo en la ventana actual; si no, devuelve false. */
+  permitir(clave: string, maximo: number, ventanaSegundos: number): Promise<boolean>;
+}
+
+/** Uso diario de la IA por motivo (se reinicia cada día): presupuesto y registro. */
 export interface PresupuestoDiario {
   /** Cuenta un uso si todavía queda presupuesto hoy; devuelve false si ya se agotó. */
   consumir(motivo: string, maximo: number): Promise<boolean>;
+  /** Suma una cantidad al uso de hoy (por ejemplo, tokens gastados), sin tope. */
+  sumar(motivo: string, cantidad: number): Promise<void>;
+  /** Todo lo usado hoy, por motivo. */
+  usoDeHoy(): Promise<Record<string, number>>;
 }
 
 export interface RepositorioMemorias {

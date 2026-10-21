@@ -4,6 +4,7 @@ import { conexionPruebas, vaciarTablas } from "@/pruebas/bd";
 import { DELETE as cerrarSesion, POST as iniciarSesion } from "./sesion/route";
 import { POST as procesarPaso } from "./documentos/[id]/paso/route";
 import { GET as listarDocumentos, POST as subirDocumento } from "./documentos/route";
+import { GET as consultarEstado } from "./estado/route";
 
 const CLAVE = "clave-de-prueba";
 const sql = conexionPruebas();
@@ -56,10 +57,32 @@ describe("/api/sesion", () => {
     expect(respuesta.headers.get("set-cookie")).toMatch(/sesion_admin=.+HttpOnly.*SameSite=strict/i);
   });
 
+  it("tras 5 intentos en 15 minutos responde 429, aunque la clave sea correcta", async () => {
+    const intentar = (clave: string) =>
+      iniciarSesion(peticion("/api/sesion", { metodo: "POST", cuerpo: { clave } }));
+    for (let i = 0; i < 5; i += 1) await intentar("mala");
+
+    const respuesta = await intentar(CLAVE);
+
+    expect(respuesta.status).toBe(429);
+    expect(await respuesta.json()).toEqual({ error: expect.stringContaining("Demasiados intentos") });
+  });
+
   it("al cerrar sesión borra la cookie", async () => {
     const respuesta = await cerrarSesion();
 
     expect(respuesta.headers.get("set-cookie")).toMatch(/sesion_admin=;.*Expires=Thu, 01 Jan 1970/i);
+  });
+});
+
+describe("/api/estado", () => {
+  it("exige sesión y entrega el uso de hoy y las páginas listas", async () => {
+    expect((await consultarEstado(peticion("/api/estado"))).status).toBe(401);
+    await sql`insert into uso_ia (motivo, cantidad) values ('tokens:modelo', 1500), ('precarga', 2)`;
+
+    const respuesta = await consultarEstado(peticion("/api/estado", { cookie: await cookieDeSesion() }));
+
+    expect(await respuesta.json()).toEqual({ usoHoy: { precarga: 2, "tokens:modelo": 1500 }, paginasListas: 0 });
   });
 });
 

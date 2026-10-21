@@ -30,6 +30,10 @@ export class RepositorioPaginasMemoria implements RepositorioPaginas {
     this.cambiar({ ...pagina, estado: "lista" });
   }
 
+  async contarListas() {
+    return [...this.paginas.values()].filter((pagina) => pagina.ui !== null).length;
+  }
+
   async liberar(slug: string) {
     const actual = this.paginas.get(slug);
     if (actual) this.cambiar({ ...actual, estado: "error" });
