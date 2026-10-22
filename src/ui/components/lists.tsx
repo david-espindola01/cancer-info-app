@@ -1,3 +1,4 @@
+import { withoutMarks } from "@/domain/markup";
 import { CheckIcon } from "../icons";
 import { styles } from "../styles";
 import { TextWithTopics } from "../text-with-topics";
@@ -23,7 +24,7 @@ function Items({ items }: { items: string[] }) {
 export function BulletList({ title, items }: { title: string | null; items: string[] }) {
   return (
     <div className="color-green rounded-2xl bg-(--cf) p-4">
-      {title && <h3 className={`${styles.blockTitle} text-(--c)`}>{title}</h3>}
+      {title && <h3 className={`${styles.blockTitle} text-(--c)`}>{withoutMarks(title)}</h3>}
       <Items items={items} />
     </div>
   );
@@ -33,7 +34,7 @@ export function BulletList({ title, items }: { title: string | null; items: stri
 export function Steps({ title, steps }: { title: string | null; steps: { title: string; text: string }[] }) {
   return (
     <div>
-      {title && <h3 className={styles.blockTitle}>{title}</h3>}
+      {title && <h3 className={styles.blockTitle}>{withoutMarks(title)}</h3>}
       <ol className="color-cycle mt-3 flex flex-col">
         {steps.map((step, i) => (
           <li key={i} className="relative flex gap-4 pb-5 last:pb-0">
@@ -44,7 +45,7 @@ export function Steps({ title, steps }: { title: string | null; steps: { title: 
               {i + 1}
             </span>
             <div className="pt-1.5">
-              <p className="font-bold text-(--c)">{step.title}</p>
+              <p className="font-bold text-(--c)">{withoutMarks(step.title)}</p>
               <p>
                 <TextWithTopics text={step.text} />
               </p>
@@ -60,11 +61,11 @@ export function Steps({ title, steps }: { title: string | null; steps: { title: 
 export function Comparison({ title, columns }: { title: string; columns: { title: string; items: string[] }[] }) {
   return (
     <div>
-      <h3 className={styles.blockTitle}>{title}</h3>
+      <h3 className={styles.blockTitle}>{withoutMarks(title)}</h3>
       <div className="color-cycle mt-3 grid gap-3 sm:grid-cols-2">
         {columns.map((column, i) => (
           <div key={i} className="overflow-hidden rounded-2xl border-2 border-(--c)">
-            <h4 className="bg-(--c) px-4 py-2 text-lg font-bold text-background">{column.title}</h4>
+            <h4 className="bg-(--c) px-4 py-2 text-lg font-bold text-background">{withoutMarks(column.title)}</h4>
             <div className="h-full bg-(--cf) px-4 pb-4 pt-2">
               <Items items={column.items} />
             </div>
@@ -86,7 +87,7 @@ export function Faq({ questions }: { questions: { question: string; answer: stri
             <span aria-hidden className={`${styles.circle} size-8`}>
               ?
             </span>
-            <span className="flex-1">{item.question}</span>
+            <span className="flex-1">{withoutMarks(item.question)}</span>
             <span aria-hidden className="text-2xl leading-none text-(--c) transition-transform group-open:rotate-45">
               +
             </span>

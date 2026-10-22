@@ -50,6 +50,31 @@ describe("ListenButton", () => {
     expect(screen.getByRole("button", { pressed: false })).toBeInTheDocument();
   });
 
+  it("reads the visible article, not the hidden ones of pages visited before", () => {
+    withVoice();
+    // jsdom has no layout: visibility is simulated from the inline style.
+    Object.defineProperty(HTMLElement.prototype, "checkVisibility", {
+      configurable: true,
+      value(this: HTMLElement) {
+        return this.style.display !== "none";
+      },
+    });
+    onTestFinished(() => {
+      delete (HTMLElement.prototype as { checkVisibility?: unknown }).checkVisibility;
+    });
+    render(
+      <main>
+        <ListenButton />
+        <article style={{ display: "none" }}>Página anterior</article>
+        <article>Página actual</article>
+      </main>,
+    );
+
+    fireEvent.click(screen.getByRole("button"));
+
+    expect((voice.speak.mock.calls[0]![0] as FakeUtterance).text).toBe("Página actual");
+  });
+
   it("goes back to the initial state when it finishes reading", () => {
     withVoice();
     render(

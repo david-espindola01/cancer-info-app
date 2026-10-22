@@ -1,4 +1,4 @@
-import { markFirstOccurrence, splitMarks } from "./markup";
+import { markFirstOccurrence, splitMarks, withoutMarks } from "./markup";
 
 describe("markFirstOccurrence", () => {
   it("marks only the first occurrence, as a whole word and case-insensitively", () => {
@@ -63,5 +63,14 @@ describe("splitMarks", () => {
   it("leaves text without marks, or with unclosed marks, untouched", () => {
     expect(splitMarks("Sin marcas [[abierta")).toEqual([{ kind: "text", text: "Sin marcas [[abierta" }]);
     expect(splitMarks("")).toEqual([]);
+  });
+});
+
+describe("withoutMarks", () => {
+  it("keeps the visible text of each mark and leaves plain texts alone", () => {
+    expect(withoutMarks("¿Qué es la [[metástasis|metástasis]]? Un [[tumor]] y [[ ]]")).toBe(
+      "¿Qué es la metástasis? Un tumor y  ",
+    );
+    expect(withoutMarks("Sin marcas")).toBe("Sin marcas");
   });
 });
