@@ -70,6 +70,9 @@ export function reviewPage(
   const has = (name: string, condition: (props: Props) => boolean = () => true) =>
     components.some(([n, props]) => n === name && condition(props));
 
+  // Every page starts with its title (the model sometimes answers «no information» without one).
+  if (!has(headingContract.name)) ui.unshift(headingFor(currentSlug.replaceAll("-", " ")));
+
   if (has(noInformationContract.name)) {
     // Never a dead end: suggest topics that are covered.
     const suggestion = suggestTopics(material.topics, currentSlug);
@@ -143,11 +146,14 @@ function suggestTopics(topics: string[], currentSlug: string): UiNode | null {
 }
 
 /** The page shown, without calling the AI, when no source covers the topic. */
+const headingFor = (topic: string) => ({
+  [headingContract.name]: { props: { title: topic.charAt(0).toUpperCase() + topic.slice(1), subtitle: null } },
+});
+
 export function noInformationPage(topic: string): PageUi {
-  const title = topic.charAt(0).toUpperCase() + topic.slice(1);
   return {
     ui: [
-      { [headingContract.name]: { props: { title, subtitle: null } } },
+      headingFor(topic),
       {
         [noInformationContract.name]: {
           props: {

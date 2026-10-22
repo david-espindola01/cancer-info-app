@@ -51,6 +51,7 @@ describe("reviewPage", () => {
   it("does not duplicate the consult notice or the sources when they are already there", () => {
     const page: PageUi = {
       ui: [
+        heading,
         { Section: { props: { title: "s" }, children: [{ Notice: { props: { kind: "consult", text: "t" } } }] } },
         { Sources: { props: { numbers: [1] } } },
       ],
@@ -152,9 +153,18 @@ describe("reviewPage", () => {
   });
 
   it("keeps the suggestions when the model already put them on the no-information page", () => {
-    const page: PageUi = { ui: [{ NoInformation: { props: { message: "m" } } }, nextTopics] };
+    const page: PageUi = { ui: [heading, { NoInformation: { props: { message: "m" } } }, nextTopics] };
 
     expect(reviewPage(page, { sources, topics: ["tabaco"] }, "x").page).toEqual(page);
+  });
+
+  it("starts every page with its title when the model left it out", () => {
+    const page: PageUi = { ui: [{ NoInformation: { props: { message: "m" } } }] };
+
+    const { page: reviewed } = reviewPage(page, { sources, topics: [] }, "vacuna-contra-el-vph");
+
+    expect(reviewed.ui[0]).toEqual({ Heading: { props: { title: "Vacuna contra el vph", subtitle: null } } });
+    expect(page.ui).toHaveLength(1);
   });
 });
 
