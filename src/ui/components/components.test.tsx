@@ -14,6 +14,14 @@ describe("catalog components with minimal props", () => {
     expect(container.querySelectorAll("p")).toHaveLength(0);
   });
 
+  it("shows the plain text of fields that are not links, even if the model marked them", () => {
+    render(<Heading title="¿Qué es la [[metástasis|metástasis]]?" subtitle="Sobre el [[tumor]]" />);
+
+    expect(screen.getByRole("heading", { level: 1, name: "¿Qué es la metástasis?" })).toBeInTheDocument();
+    expect(screen.getByText("Sobre el tumor")).toBeInTheDocument();
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+  });
+
   it("BulletList and Steps without a title show only their content", () => {
     render(
       <>

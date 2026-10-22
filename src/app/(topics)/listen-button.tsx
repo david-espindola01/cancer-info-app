@@ -25,8 +25,11 @@ export function ListenButton() {
       setSpeaking(false);
       return;
     }
+    // Next.js keeps the pages visited before hidden in the document: only the visible one is read.
+    const article = [...document.querySelectorAll<HTMLElement>("main article")].find(
+      (candidate) => candidate.checkVisibility?.() ?? true,
+    );
     // innerText keeps the pauses between blocks (title, paragraphs); textContent joins them.
-    const article = document.querySelector<HTMLElement>("main article");
     const text = (article?.innerText || article?.textContent)?.trim();
     if (!text) return;
     const reading = new SpeechSynthesisUtterance(text);

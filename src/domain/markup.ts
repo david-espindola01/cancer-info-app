@@ -43,3 +43,10 @@ export function splitMarks(text: string): Segment[] {
   if (from < text.length) segments.push({ kind: "text", text: text.slice(from) });
   return segments;
 }
+
+/** The text as it reads, without marks: for fields that are not links (titles, figures…). */
+export function withoutMarks(text: string): string {
+  return splitMarks(text)
+    .map((segment) => segment.text)
+    .join("");
+}

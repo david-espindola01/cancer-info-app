@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { withoutMarks } from "@/domain/markup";
 import { AlertIcon, BookIcon, HealthIcon, InfoIcon } from "../icons";
 import { styles } from "../styles";
 import { TextWithTopics } from "../text-with-topics";
@@ -8,10 +9,10 @@ export function Stat({ value, description, source }: { value: string; descriptio
   return (
     <figure className="color-coral flex items-center gap-4 rounded-3xl bg-(--cf) p-4">
       <p className={`${styles.circle} min-h-24 min-w-24 max-w-[50%] px-4 py-3 text-center text-2xl leading-tight`}>
-        {value}
+        {withoutMarks(value)}
       </p>
       <figcaption>
-        {description} <span className="text-base text-muted">(fuente {source})</span>
+        {withoutMarks(description)} <span className="text-base text-muted">(fuente {source})</span>
       </figcaption>
     </figure>
   );
@@ -27,7 +28,7 @@ export function Definition({ term, explanation }: { term: string; explanation: s
         ¿Qué significa?
       </dt>
       <dd className="mt-1">
-        <span className="font-bold">{term}:</span> <TextWithTopics text={explanation} />
+        <span className="font-bold">{withoutMarks(term)}:</span> <TextWithTopics text={explanation} />
       </dd>
     </dl>
   );
