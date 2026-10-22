@@ -12,6 +12,7 @@ import { PostgresPageRepository } from "./db/postgres-page-repository";
 import { PostgresRateLimiter } from "./db/postgres-rate-limiter";
 import { optionalInteger, optionalVariable, requiredVariable } from "./environment";
 import { FakeProvider } from "./llm/fake-provider";
+import { FallbackProvider } from "./llm/fallback-provider";
 import { responseFromSchema } from "./llm/generic-response";
 import { GroqProvider, type ReasoningEffort } from "./llm/groq-provider";
 import { createSessionToken, passwordMatches, sessionTokenValid, visitorFingerprint } from "./session";
@@ -52,11 +53,20 @@ export const documents = {
     }),
 };
 
-const presentationDependencies = () => ({
-  pages: new PostgresPageRepository(sql()),
-  memories: new PostgresMemoryRepository(sql()),
-  presenter: llmProvider(optionalVariable("GROQ_PRESENTER_MODEL", "openai/gpt-oss-20b")),
-});
+/**
+ * A visitor waiting for a page may use the fallback model when the main one hits its daily
+ * limit; work nobody is waiting for (prefetching, refreshing) does not, so it does not
+ * spend the quota the Reader needs.
+ */
+function presentationDependencies({ visitorWaiting }: { visitorWaiting: boolean }) {
+  const presenter = llmProvider(optionalVariable("GROQ_PRESENTER_MODEL", "openai/gpt-oss-20b"));
+  const fallback = llmProvider(optionalVariable("GROQ_PRESENTER_FALLBACK_MODEL", "openai/gpt-oss-120b"));
+  return {
+    pages: new PostgresPageRepository(sql()),
+    memories: new PostgresMemoryRepository(sql()),
+    presenter: visitorWaiting ? new FallbackProvider([presenter, fallback]) : presenter,
+  };
+}
 
 /** For the team's panel: AI usage today and pages ready to serve. */
 export async function systemStatus() {
@@ -82,14 +92,14 @@ function allow(reason: keyof typeof LIMITS, ip: string): Promise<boolean> {
 export const topics = {
   get: (input: string, ip: string) =>
     getTopicPage(input, {
-      ...presentationDependencies(),
+      ...presentationDependencies({ visitorWaiting: true }),
       allowGeneration: () => allow("newPages", ip),
     }),
-  regenerate: (slug: string) => generateTopicPage(slug, presentationDependencies()),
+  regenerate: (slug: string) => generateTopicPage(slug, presentationDependencies({ visitorWaiting: false })),
   prefetch: (slugs: string[]) =>
     prefetchTopics(
       slugs,
-      { ...presentationDependencies(), budget: dailyBudget() },
+      { ...presentationDependencies({ visitorWaiting: false }), budget: dailyBudget() },
       {
         perVisit: optionalInteger("PREFETCH_PER_VISIT", 2),
         dailyMax: optionalInteger("PREFETCH_DAILY_MAX", 30),
