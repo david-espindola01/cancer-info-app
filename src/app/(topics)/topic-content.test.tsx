@@ -71,6 +71,9 @@ describe("TopicContent", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Estamos preparando esta información");
     await act(() => vi.advanceTimersByTimeAsync(3_000));
     expect(refresh).toHaveBeenCalledTimes(1);
+    // The server often answers with the same wait: it keeps asking anyway.
+    await act(() => vi.advanceTimersByTimeAsync(6_000));
+    expect(refresh).toHaveBeenCalledTimes(3);
   });
 
   it("when there is a line, says how many pages go before and roughly how long it takes", async () => {
