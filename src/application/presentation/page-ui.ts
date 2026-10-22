@@ -34,13 +34,30 @@ const CONSULT_NOTICE =
 const SUGGESTION_REASON = "Sobre esto sí tenemos información.";
 
 /**
- * The page the Presenter must return: the schema of the whole catalog (the same one the
- * browser validates). Groq in strict mode guarantees its shape; here only the overall
- * structure is checked before its content is reviewed.
+ * Descriptions Hashbrown adds to every component («Component Props», «Section node»…):
+ * they say nothing the structure does not, and they travel in every request.
+ */
+const GENERIC_DESCRIPTION = /^(|Component Props|Child Elements|List of elements|\w+ node)$/;
+
+/** The schema without generic descriptions: about a quarter fewer tokens per page. */
+function withoutGenericDescriptions(node: unknown): unknown {
+  if (Array.isArray(node)) return node.map(withoutGenericDescriptions);
+  if (!node || typeof node !== "object") return node;
+  return Object.fromEntries(
+    Object.entries(node)
+      .filter(([key, value]) => !(key === "description" && typeof value === "string" && GENERIC_DESCRIPTION.test(value)))
+      .map(([key, value]) => [key, withoutGenericDescriptions(value)]),
+  );
+}
+
+/**
+ * The page the Presenter must return: the schema of the whole catalog (the browser
+ * validates the same components). Groq in strict mode guarantees its shape; here only the
+ * overall structure is checked before its content is reviewed.
  */
 export const pageOutput: JsonOutput<PageUi> = {
   name: "page",
-  jsonSchema: createUiJsonSchema({ components: catalog }),
+  jsonSchema: withoutGenericDescriptions(createUiJsonSchema({ components: catalog })) as Record<string, unknown>,
   validate(value) {
     const ui = (value as { ui?: unknown } | null)?.ui;
     if (!Array.isArray(ui) || !ui.every((node) => typeof node === "object" && node !== null)) {

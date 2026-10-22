@@ -97,6 +97,7 @@ describe("PostgresAiCapacity", () => {
     subject,
     priority: "visitor",
     tokens: 5_000,
+    promptTokens: 5_000,
     dailyShare: 1,
     ...changes,
   });

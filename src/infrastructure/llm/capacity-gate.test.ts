@@ -21,10 +21,10 @@ function fakeCapacity(decision: Awaited<ReturnType<AiCapacity["requestTurn"]>>) 
 }
 
 describe("estimateTokens", () => {
-  it("counts the prompt and schema at 4 characters per token, plus half of the answer's cap", () => {
-    const schemaCharacters = JSON.stringify(request.output.jsonSchema).length;
+  it("counts the prompt and schema at 4 characters per token, and adds half of the answer's cap", () => {
+    const promptTokens = Math.ceil((8_000 + JSON.stringify(request.output.jsonSchema).length) / 4);
 
-    expect(estimateTokens(request)).toBe(Math.ceil((8_000 + schemaCharacters) / 4 + 1_000));
+    expect(estimateTokens(request)).toEqual({ promptTokens, tokens: promptTokens + 1_000 });
   });
 });
 
@@ -41,7 +41,7 @@ describe("CapacityGate", () => {
       model: "m",
       subject: "page:tumor",
       priority: "visitor",
-      tokens: estimateTokens(request),
+      ...estimateTokens(request),
       dailyShare: 0.7,
     });
     expect(capacity.settle).toHaveBeenCalledWith("c1", 3_100);
