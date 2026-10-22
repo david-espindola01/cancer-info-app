@@ -24,17 +24,31 @@ export function prepararMaterial(memorias: MemoriaEncontrada[]): {
   const fuentes: FuentePagina[] = [];
   const temas = new Set<string>();
 
-  for (const { contenido } of memorias) {
+  for (const { contenido, titulo } of memorias) {
     const numero = fuentes.length + 1;
     const bloque = describirMemoria(numero, contenido);
     if (bloques.length > 0 && [...bloques, bloque].join("\n\n").length > MAX_CARACTERES_MATERIAL) break;
 
     bloques.push(bloque.slice(0, MAX_CARACTERES_MATERIAL));
-    const { autores, anio, revista } = contenido.referencia;
-    fuentes.push({ numero, titulo: contenido.tituloSencillo, referencia: `${autores} (${anio}). ${revista}` });
+    fuentes.push({
+      numero,
+      titulo: contenido.tituloSencillo,
+      referencia: referenciaLegible(contenido.referencia, titulo),
+    });
     contenido.temas.forEach((tema) => temas.add(tema));
   }
   return { texto: bloques.join("\n\n"), fuentes, temas: [...temas] };
+}
+
+/** «Autores (año) Revista» sin los datos que el Lector no encontró; si no hay ninguno, el título del documento. */
+function referenciaLegible(
+  { autores, anio, revista }: MemoriaEncontrada["contenido"]["referencia"],
+  tituloDocumento: string,
+): string {
+  const conocido = (valor: string) => valor.trim() !== "" && !/^no indicado$/i.test(valor.trim());
+  const quien = [conocido(autores) && autores, conocido(anio) && `(${anio})`].filter(Boolean).join(" ");
+  const donde = conocido(revista) ? revista : "";
+  return [quien, donde].filter(Boolean).join(". ") || tituloDocumento;
 }
 
 function describirMemoria(numero: number, m: MemoriaEncontrada["contenido"]): string {

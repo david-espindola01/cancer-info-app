@@ -67,6 +67,15 @@ export function contratoRepositorioMemorias(crear: () => Promise<Repositorios>) 
     expect(await repos.memorias.temasMasFrecuentes(3)).toEqual(["tabaco", "dieta", "pulmón"]);
   });
 
+  it("prioriza la fuente cuyo título se parece a la consulta, aunque otra mencione más la palabra", async () => {
+    await documentoConMemoria("Factores de riesgo de cáncer", "El cáncer, el cáncer y el cáncer: riesgos del cáncer.");
+    const definicion = await documentoConMemoria("¿Qué es el cáncer?", "Una definición del cáncer.");
+
+    const [primera] = await repos.memorias.buscar("que es el cancer", 1);
+
+    expect(primera?.documentoId).toBe(definicion);
+  });
+
   it("devuelve vacío si la consulta no tiene palabras útiles", async () => {
     await documentoConMemoria("A", "texto");
 

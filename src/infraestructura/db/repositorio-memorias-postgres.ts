@@ -22,14 +22,22 @@ export class RepositorioMemoriasPostgres implements RepositorioMemorias {
     const terminos = terminosDeBusqueda(consulta);
     if (terminos.length === 0) return [];
 
-    // Basta con que coincida un término («|»); ts_rank_cd ordena por cuántos y qué tan cerca.
+    const texto = consulta.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+    // Basta con que coincida un término («|»). El orden suma la relevancia del texto
+    // (normalizada a 0–1) y, con el doble de peso, cuánto se parece el título a la consulta.
     const filas = await this.sql<{ documento_id: string; titulo: string; contenido: ContenidoMemoria }[]>`
       select m.documento_id, d.titulo, m.contenido
       from memorias m
       join documentos d on d.id = m.documento_id,
-      to_tsquery('es', ${terminos.join(" | ")}) consulta
-      where m.busqueda @@ consulta
-      order by ts_rank_cd(m.busqueda, consulta) desc, m.documento_id
+      to_tsquery('es', ${terminos.join(" | ")}) consulta,
+      lateral (
+        select greatest(
+          similarity(unaccent(lower(d.titulo)), ${texto}),
+          similarity(unaccent(lower(m.contenido->>'tituloSencillo')), ${texto})
+        ) as parecido
+      ) titulo
+      where m.busqueda @@ consulta or titulo.parecido > 0.3
+      order by titulo.parecido * 2 + ts_rank_cd(m.busqueda, consulta, 32) desc, m.documento_id
       limit ${limite}`;
     return filas.map((fila) => ({
       documentoId: fila.documento_id,

@@ -25,11 +25,17 @@ export class RepositorioMemoriasMemoria implements RepositorioMemorias {
     const encontradas: { memoria: MemoriaEncontrada; coincidencias: number }[] = [];
 
     for (const [documentoId, contenido] of this.memorias) {
-      const palabras = new Set(sinTildes(valoresDeTexto(contenido).join(" ")).split(/[^\p{L}\p{N}]+/u));
-      const coincidencias = terminos.filter((termino) => palabras.has(termino)).length;
-      if (coincidencias === 0) continue;
+      const palabrasDe = (texto: string) => new Set(sinTildes(texto).split(/[^\p{L}\p{N}]+/u));
+      const palabras = palabrasDe(valoresDeTexto(contenido).join(" "));
       const documento = await this.documentos.obtener(documentoId);
-      encontradas.push({ memoria: { documentoId, titulo: documento?.titulo ?? "", contenido }, coincidencias });
+      const titulo = documento?.titulo ?? "";
+      const enTitulo = palabrasDe(`${titulo} ${contenido.tituloSencillo}`);
+      // Como en Postgres: cuenta la coincidencia en el texto y, con el doble de peso, en el título.
+      const coincidencias =
+        terminos.filter((termino) => palabras.has(termino)).length +
+        2 * terminos.filter((termino) => enTitulo.has(termino)).length;
+      if (coincidencias === 0) continue;
+      encontradas.push({ memoria: { documentoId, titulo, contenido }, coincidencias });
     }
 
     return encontradas

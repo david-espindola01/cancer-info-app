@@ -21,6 +21,18 @@ describe("prepararMaterial", () => {
     expect(texto).toContain("Cifras:\n- 1 de cada 3: Personas del estudio");
   });
 
+  it("arma la referencia solo con los datos conocidos, o usa el título del documento", () => {
+    const sinDatos = { autores: "No indicado", anio: "No indicado", revista: "No indicado" };
+    const parcial = { autores: "García L", anio: "No indicado", revista: "Revista X" };
+
+    const { fuentes } = prepararMaterial([
+      encontrada("Sin datos", { referencia: sinDatos }),
+      encontrada("Parcial", { referencia: parcial }),
+    ]);
+
+    expect(fuentes.map((f) => f.referencia)).toEqual(["Sin datos.pdf", "García L. Revista X"]);
+  });
+
   it("limita cada lista y omite las que están vacías", () => {
     const hallazgos = Array.from({ length: 9 }, (_, i) => ({ texto: `Hallazgo ${i}`, solidez: "alta" as const }));
 
