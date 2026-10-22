@@ -17,6 +17,18 @@ describe("connection status", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Estamos preparando esta información");
   });
 
+  it.each([
+    [{ ahead: 0, waitMs: 3_000 }, "Estamos preparando esta información"],
+    [{ ahead: 1, waitMs: 40_000 }, "Antes de esta hay 1 página en preparación. Tiempo estimado: menos de un minuto."],
+    [{ ahead: 0, waitMs: 60_000 }, "Hay mucha gente consultando en este momento. Tiempo estimado: un minuto."],
+    [{ ahead: 9, waitMs: 2_700_000 }, "Antes de esta hay 9 páginas en preparación. Tiempo estimado: unos 45 minutos."],
+    [{ ahead: 0, waitMs: 7_200_000 }, "Tiempo estimado: más de una hora."],
+  ])("with its place in line %j says «%s»", (place, message) => {
+    render(<LoadingMessage place={place} />);
+
+    expect(screen.getByRole("status")).toHaveTextContent(message);
+  });
+
   it("without signal says reading can go on and that new content will arrive later", () => {
     vi.mocked(useOffline).mockReturnValue(true);
 

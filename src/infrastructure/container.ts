@@ -1,16 +1,19 @@
 import type { Sql } from "postgres";
+import type { AiPriority } from "@/application/ai-turns";
 import type { LlmProvider } from "@/application/llm-port";
 import { generateTopicPage, getTopicPage } from "@/application/presentation/topic-pages";
 import { prefetchTopics } from "@/application/presentation/prefetch-topics";
 import { processNextStep } from "@/application/reading/process-next-step";
 import { registerDocument } from "@/application/reading/register-document";
 import { createConnection } from "./db/client";
+import { PostgresAiCapacity } from "./db/postgres-ai-capacity";
 import { PostgresDailyBudget } from "./db/postgres-daily-budget";
 import { PostgresDocumentRepository } from "./db/postgres-document-repository";
 import { PostgresMemoryRepository } from "./db/postgres-memory-repository";
 import { PostgresPageRepository } from "./db/postgres-page-repository";
 import { PostgresRateLimiter } from "./db/postgres-rate-limiter";
 import { optionalInteger, optionalVariable, requiredVariable } from "./environment";
+import { CapacityGate } from "./llm/capacity-gate";
 import { FakeProvider } from "./llm/fake-provider";
 import { FallbackProvider } from "./llm/fallback-provider";
 import { responseFromSchema } from "./llm/generic-response";
@@ -29,8 +32,27 @@ const sql = () => (connection ??= createConnection(requiredVariable("DATABASE_UR
 const documentRepository = () => new PostgresDocumentRepository(sql());
 const dailyBudget = () => new PostgresDailyBudget(sql());
 
+/** Each model's limits on Groq's free tier (the same for gpt-oss-20b and gpt-oss-120b). */
+const aiCapacity = () =>
+  new PostgresAiCapacity(sql(), {
+    perMinute: optionalInteger("GROQ_TOKENS_PER_MINUTE", 8_000),
+    perDay: optionalInteger("GROQ_TOKENS_PER_DAY", 200_000),
+  });
+
+/**
+ * Who goes first in each model's line and how much of its day each kind of work may use:
+ * work nobody is waiting for stops at 60 % so visitors keep the rest, and visitors may use
+ * up to 70 % of the fallback model, which leaves 30 % for the team's reading.
+ */
+const TURNS = {
+  visitor: { priority: "visitor", dailyShare: 1 },
+  visitorOnFallback: { priority: "visitor", dailyShare: 0.7 },
+  reader: { priority: "reader", dailyShare: 1 },
+  background: { priority: "background", dailyShare: 0.6 },
+} satisfies Record<string, { priority: AiPriority; dailyShare: number }>;
+
 /** Groq in real use; «fake» in CI and e2e: valid answers without calling any model. */
-function llmProvider(model: string): LlmProvider {
+function llmProvider(model: string, turn: (typeof TURNS)[keyof typeof TURNS]): LlmProvider {
   if (optionalVariable("LLM_PROVIDER", "groq", ["groq", "fake"]) === "fake") {
     return new FakeProvider((request) => responseFromSchema(request.output.jsonSchema, request.user));
   }
@@ -39,6 +61,7 @@ function llmProvider(model: string): LlmProvider {
     model,
     onUsage: (usage) => dailyBudget().add(`tokens:${usage.model}`, usage.tokens),
     effort: optionalVariable<ReasoningEffort>("GROQ_REASONING_EFFORT", "low", ["low", "medium", "high"]),
+    gate: new CapacityGate(aiCapacity(), { model, ...turn }),
   });
 }
 
@@ -49,22 +72,23 @@ export const documents = {
     processNextStep(id, {
       documents: documentRepository(),
       memories: new PostgresMemoryRepository(sql()),
-      reader: llmProvider(optionalVariable("GROQ_READER_MODEL", "openai/gpt-oss-120b")),
+      reader: llmProvider(optionalVariable("GROQ_READER_MODEL", "openai/gpt-oss-120b"), TURNS.reader),
     }),
 };
 
 /**
- * A visitor waiting for a page may use the fallback model when the main one hits its daily
- * limit; work nobody is waiting for (prefetching, refreshing) does not, so it does not
- * spend the quota the Reader needs.
+ * A visitor waiting for a page may also use the fallback model when the main one makes them
+ * wait; work nobody is waiting for (prefetching, refreshing) only uses the main one.
  */
 function presentationDependencies({ visitorWaiting }: { visitorWaiting: boolean }) {
-  const presenter = llmProvider(optionalVariable("GROQ_PRESENTER_MODEL", "openai/gpt-oss-20b"));
-  const fallback = llmProvider(optionalVariable("GROQ_PRESENTER_FALLBACK_MODEL", "openai/gpt-oss-120b"));
+  const model = optionalVariable("GROQ_PRESENTER_MODEL", "openai/gpt-oss-20b");
+  const fallbackModel = optionalVariable("GROQ_PRESENTER_FALLBACK_MODEL", "openai/gpt-oss-120b");
   return {
     pages: new PostgresPageRepository(sql()),
     memories: new PostgresMemoryRepository(sql()),
-    presenter: visitorWaiting ? new FallbackProvider([presenter, fallback]) : presenter,
+    presenter: visitorWaiting
+      ? new FallbackProvider([llmProvider(model, TURNS.visitor), llmProvider(fallbackModel, TURNS.visitorOnFallback)])
+      : llmProvider(model, TURNS.background),
   };
 }
 
@@ -79,7 +103,9 @@ export async function systemStatus() {
 
 /** Per-visitor limits: they protect the AI quota and the team password. */
 const LIMITS = {
-  newPages: { max: 10, windowSeconds: 10 * 60 },
+  // Generous because many people may share one IP (a classroom, a health post); the AI's line
+  // already protects the quota.
+  newPages: { max: 30, windowSeconds: 10 * 60 },
   loginAttempts: { max: 5, windowSeconds: 15 * 60 },
 } as const;
 

@@ -9,6 +9,7 @@ const request = {
   output: skilletOutput("greeting", s.object("Greeting", { text: s.string("A greeting") })),
   system: "s",
   user: "u",
+  subject: "page:x",
   maxOutputTokens: 100,
 };
 const limited = (waitMs: number) =>
@@ -29,24 +30,24 @@ describe("FallbackProvider", () => {
     expect(second.requests).toHaveLength(0);
   });
 
-  it("uses the next provider when one hits a long limit", async () => {
-    await expect(new FallbackProvider([limited(1_470_000), answering("second")]).generateJson(request)).resolves.toEqual({
+  it.each([
+    ["its daily quota ran out", 1_470_000],
+    ["its line is long", 12_000],
+  ])("uses the next provider when one has to wait because %s", async (_, waitMs) => {
+    await expect(new FallbackProvider([limited(waitMs), answering("second")]).generateJson(request)).resolves.toEqual({
       text: "second",
     });
   });
 
-  it("passes a short wait on to the caller without switching", async () => {
-    const second = answering("second");
+  it("reports the shortest wait, with its place in line, when every provider has to wait", async () => {
+    const inLine = (waitMs: number, ahead: number) =>
+      new FakeProvider(() => {
+        throw new RateLimitExceeded(waitMs, ahead);
+      });
 
-    await expect(new FallbackProvider([limited(12_000), second]).generateJson(request)).rejects.toMatchObject({
-      waitMs: 12_000,
-    });
-    expect(second.requests).toHaveLength(0);
-  });
-
-  it("reports the shortest wait when every provider is limited", async () => {
-    await expect(new FallbackProvider([limited(900_000), limited(300_000)]).generateJson(request)).rejects.toMatchObject({
-      waitMs: 300_000,
+    await expect(new FallbackProvider([inLine(90_000, 4), inLine(30_000, 1)]).generateJson(request)).rejects.toMatchObject({
+      waitMs: 30_000,
+      ahead: 1,
     });
   });
 

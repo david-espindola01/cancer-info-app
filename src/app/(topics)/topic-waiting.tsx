@@ -2,10 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import type { QueuePlace } from "./connection-status";
 import { TopicSkeleton } from "./topic-skeleton";
 
 /** While the page is being prepared (or the AI hit its limit), asks the server for it again. */
-export function TopicWaiting({ retryMs }: { retryMs: number }) {
+export function TopicWaiting({ retryMs, place }: { retryMs: number; place: QueuePlace }) {
   const router = useRouter();
 
   useEffect(() => {
@@ -13,5 +14,5 @@ export function TopicWaiting({ retryMs }: { retryMs: number }) {
     return () => clearTimeout(timer);
   }, [router, retryMs]);
 
-  return <TopicSkeleton />;
+  return <TopicSkeleton place={place} />;
 }

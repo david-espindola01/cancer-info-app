@@ -66,11 +66,19 @@ describe("TopicContent", () => {
 
   it("while it is being prepared shows the wait and asks for the page again", async () => {
     vi.useFakeTimers();
-    await show({ kind: "preparing", retryMs: 3_000 });
+    await show({ kind: "preparing", retryMs: 3_000, ahead: 0, waitMs: 3_000 });
 
     expect(screen.getByRole("status")).toHaveTextContent("Estamos preparando esta información");
     await act(() => vi.advanceTimersByTimeAsync(3_000));
     expect(refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("when there is a line, says how many pages go before and roughly how long it takes", async () => {
+    await show({ kind: "preparing", retryMs: 30_000, ahead: 3, waitMs: 150_000 });
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Hay mucha gente consultando en este momento. Antes de esta hay 3 páginas en preparación. Tiempo estimado: unos 3 minutos.",
+    );
   });
 
   it("identifies the visitor by their IP to apply their limit of new pages", async () => {

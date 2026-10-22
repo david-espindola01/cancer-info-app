@@ -4,7 +4,7 @@ import type { LlmProvider } from "@/application/llm-port";
 import { skilletOutput } from "@/application/skillet-output";
 
 const schema = s.object("Test", { name: s.string("A name"), age: s.number("An age") });
-const request = { output: skilletOutput("test", schema), system: "system", user: "user", maxOutputTokens: 100 };
+const request = { output: skilletOutput("test", schema), system: "system", user: "user", subject: "page:x", maxOutputTokens: 100 };
 
 /**
  * Tests every LlmProvider must pass. `create` gets what the model «answers» and returns a

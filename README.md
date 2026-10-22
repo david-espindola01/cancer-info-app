@@ -47,6 +47,7 @@ Also: `npm run e2e` (Playwright on a mobile profile) and `npm run lighthouse` (L
   2. Write the React component in `src/ui/components/` and register it in `src/ui/kit.ts`.
   3. The tests check that the catalog stays generic, accessible and compatible with Groq's strict mode.
 - **Tuning how much is prefetched**: `PREFETCH_PER_VISIT` and `PREFETCH_DAILY_MAX`.
+- **AI quota**: every call waits its turn in each model's line (`src/application/ai-turns.ts`), so Groq's limits are never exceeded. Visitors go first, then the team's reading, then prefetching, which stops when 40 % of the day is left. If Groq's plan changes, set `GROQ_TOKENS_PER_MINUTE` and `GROQ_TOKENS_PER_DAY`.
 
 ## Deployment
 

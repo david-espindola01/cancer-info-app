@@ -32,7 +32,7 @@ export async function TopicContent({ slug }: { slug: string }) {
         </p>
       );
     case "preparing":
-      return <TopicWaiting retryMs={result.retryMs} />;
+      return <TopicWaiting retryMs={result.retryMs} place={{ ahead: result.ahead, waitMs: result.waitMs }} />;
     case "ready": {
       const { page, stale } = result;
       // After answering: this page is refreshed if needed and the next ones are prepared,

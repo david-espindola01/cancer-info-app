@@ -80,7 +80,7 @@ describe("processNextStep", () => {
 
     expect(await processNextStep(document.id, deps)).toEqual({ kind: "progress", processed: 1, total: 1 });
     expect(reader.requests).toHaveLength(2);
-    expect(reader.requests[0]!.maxOutputTokens).toBe(4_000);
+    expect(reader.requests[0]).toMatchObject({ maxOutputTokens: 4_000, subject: `document:${document.id}` });
   });
 
   it("marks the document as failed when the AI answers something invalid again, and allows retrying", async () => {

@@ -22,6 +22,6 @@ function testDatabaseUrl(): string {
 export const testConnection = (): Sql => createConnection(testDatabaseUrl());
 
 export async function emptyTables(sql: Sql): Promise<void> {
-  await sql`truncate documents, memories, pages, ai_usage, rate_limits cascade`;
+  await sql`truncate documents, memories, pages, ai_usage, rate_limits, ai_calls, ai_queue, ai_blocks cascade`;
   await sql`update corpus set version = 0`;
 }
