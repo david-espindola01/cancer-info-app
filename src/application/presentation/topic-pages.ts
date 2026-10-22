@@ -20,6 +20,11 @@ const PRESENTER_MAX_TOKENS = 2_000;
 const ATTEMPTS = 2;
 /** How often the browser asks again when someone else is already generating the page. */
 const RETRY_WHEN_BUSY_MS = 2_000;
+/**
+ * The browser asks again within this time at most, even if the AI says to wait longer
+ * (its daily limit frees up gradually, and its estimate is approximate).
+ */
+const MAX_RETRY_MS = 30_000;
 
 export interface PresentationDependencies {
   pages: PageRepository;
@@ -69,7 +74,7 @@ export async function getTopicPage(input: string, deps: VisitDependencies): Prom
     case "busy":
       return { kind: "preparing", retryMs: RETRY_WHEN_BUSY_MS };
     case "wait":
-      return { kind: "preparing", retryMs: result.waitMs };
+      return { kind: "preparing", retryMs: Math.min(result.waitMs, MAX_RETRY_MS) };
     case "error":
       return { kind: "error" };
   }

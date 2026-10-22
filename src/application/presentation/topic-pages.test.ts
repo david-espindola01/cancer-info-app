@@ -130,6 +130,14 @@ describe("getTopicPage", () => {
     expect(await deps.pages.get("tumor")).toMatchObject({ status: "error", ui: null });
   });
 
+  it("asks again within 30 s at most, even if the AI says to wait longer", async () => {
+    const { deps } = await setUp(() => {
+      throw new RateLimitExceeded(1_470_000);
+    });
+
+    expect(await getTopicPage("tumor", deps)).toEqual({ kind: "preparing", retryMs: 30_000 });
+  });
+
   it("releases the turn and propagates unexpected errors", async () => {
     const { deps } = await setUp(() => {
       throw new Error("network down");
