@@ -12,7 +12,7 @@ export class PostgresAiCapacity implements AiCapacity {
   ) {}
 
   requestTurn(request: TurnRequest) {
-    const { model, subject, priority, tokens } = request;
+    const { model, subject, priority, tokens, promptTokens } = request;
     return this.sql.begin(async (tx) => {
       // One decision per model at a time, across every server instance.
       await tx`select pg_advisory_xact_lock(hashtext(${`ai:${model}`}))`;
@@ -20,10 +20,11 @@ export class PostgresAiCapacity implements AiCapacity {
       await tx`delete from ai_queue where model = ${model} and seen_at < now() - ${PLACE_KEPT}::text::interval`;
       // Asking again keeps the place; if a more urgent request asks for the same thing, it moves up.
       await tx`
-        insert into ai_queue (model, subject, priority, tokens) values (${model}, ${subject}, ${priority}, ${tokens}::int)
+        insert into ai_queue (model, subject, priority, prompt_tokens)
+        values (${model}, ${subject}, ${priority}, ${promptTokens}::int)
         on conflict (model, subject) do update set
           seen_at = now(),
-          tokens = excluded.tokens,
+          prompt_tokens = excluded.prompt_tokens,
           priority = case when array_position(${[...PRIORITIES]}::text[], excluded.priority)
                              < array_position(${[...PRIORITIES]}::text[], ai_queue.priority)
                           then excluded.priority else ai_queue.priority end`;
@@ -33,8 +34,9 @@ export class PostgresAiCapacity implements AiCapacity {
           (select (extract(epoch from until) * 1000)::float8 from ai_blocks where model = ${model}) as blocked_until`;
       const calls = await tx<{ at: number; tokens: number }[]>`
         select (extract(epoch from at) * 1000)::float8 as at, tokens from ai_calls where model = ${model}`;
-      const queue = await tx<{ subject: string; priority: AiPriority; since: number; tokens: number }[]>`
-        select subject, priority, (extract(epoch from since) * 1000)::float8 as since, tokens from ai_queue where model = ${model}`;
+      const queue = await tx<{ subject: string; priority: AiPriority; since: number; promptTokens: number }[]>`
+        select subject, priority, (extract(epoch from since) * 1000)::float8 as since, prompt_tokens as "promptTokens"
+        from ai_queue where model = ${model}`;
 
       const decision = decideTurn(
         { now: clock!.now, calls: [...calls], queue: [...queue], blockedUntil: clock!.blocked_until },

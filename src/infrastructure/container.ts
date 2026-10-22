@@ -42,14 +42,16 @@ const aiCapacity = () =>
 /**
  * Who goes first in each model's line and how much of its day each kind of work may use:
  * work nobody is waiting for stops at 60 % so visitors keep the rest, and visitors may use
- * up to 70 % of the fallback model, which leaves 30 % for the team's reading.
+ * up to 70 % of the Reader's model, which leaves 30 % for the team's reading.
  */
 const TURNS = {
   visitor: { priority: "visitor", dailyShare: 1 },
-  visitorOnFallback: { priority: "visitor", dailyShare: 0.7 },
+  visitorOnReaderModel: { priority: "visitor", dailyShare: 0.7 },
   reader: { priority: "reader", dailyShare: 1 },
   background: { priority: "background", dailyShare: 0.6 },
 } satisfies Record<string, { priority: AiPriority; dailyShare: number }>;
+
+const readerModel = () => optionalVariable("GROQ_READER_MODEL", "openai/gpt-oss-120b");
 
 /** Groq in real use; «fake» in CI and e2e: valid answers without calling any model. */
 function llmProvider(model: string, turn: (typeof TURNS)[keyof typeof TURNS]): LlmProvider {
@@ -72,22 +74,28 @@ export const documents = {
     processNextStep(id, {
       documents: documentRepository(),
       memories: new PostgresMemoryRepository(sql()),
-      reader: llmProvider(optionalVariable("GROQ_READER_MODEL", "openai/gpt-oss-120b"), TURNS.reader),
+      reader: llmProvider(readerModel(), TURNS.reader),
     }),
 };
 
 /**
- * A visitor waiting for a page may also use the fallback model when the main one makes them
- * wait; work nobody is waiting for (prefetching, refreshing) only uses the main one.
+ * A visitor waiting for a page may also use the fallback models, in order, when the main one
+ * makes them wait (each model has its own quota); work nobody is waiting for (prefetching,
+ * refreshing) only uses the main one.
  */
 function presentationDependencies({ visitorWaiting }: { visitorWaiting: boolean }) {
   const model = optionalVariable("GROQ_PRESENTER_MODEL", "openai/gpt-oss-20b");
-  const fallbackModel = optionalVariable("GROQ_PRESENTER_FALLBACK_MODEL", "openai/gpt-oss-120b");
+  const fallbackModels = optionalVariable("GROQ_PRESENTER_FALLBACK_MODELS", "qwen/qwen3.8-27b,openai/gpt-oss-120b")
+    .split(",")
+    .map((name) => name.trim())
+    .filter(Boolean);
+  const forVisitor = (name: string) =>
+    llmProvider(name, name === readerModel() ? TURNS.visitorOnReaderModel : TURNS.visitor);
   return {
     pages: new PostgresPageRepository(sql()),
     memories: new PostgresMemoryRepository(sql()),
     presenter: visitorWaiting
-      ? new FallbackProvider([llmProvider(model, TURNS.visitor), llmProvider(fallbackModel, TURNS.visitorOnFallback)])
+      ? new FallbackProvider([model, ...fallbackModels].map(forVisitor))
       : llmProvider(model, TURNS.background),
   };
 }

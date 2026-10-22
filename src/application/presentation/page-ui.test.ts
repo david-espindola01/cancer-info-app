@@ -180,6 +180,14 @@ describe("noInformationPage", () => {
 });
 
 describe("pageOutput", () => {
+  it("sends the model the catalog without Hashbrown's generic descriptions, which travel in every request", () => {
+    const schema = JSON.stringify(pageOutput.jsonSchema);
+
+    expect(schema).not.toMatch(/Component Props|Child Elements|List of elements|"\w+ node"|"description":""/);
+    expect(schema).toContain("Page title: once, first.");
+    expect(schema).toContain('"additionalProperties":false');
+  });
+
   it("accepts { ui: [...] } and rejects any other shape", () => {
     expect(pageOutput.validate({ ui: [heading] })).toEqual({ ui: [heading] });
     expect(() => pageOutput.validate({ ui: "x" })).toThrow();

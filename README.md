@@ -41,7 +41,7 @@ Also: `npm run e2e` (Playwright on a mobile profile) and `npm run lighthouse` (L
 
 ## Frequent changes
 
-- **Changing the AI model**: `GROQ_READER_MODEL` and `GROQ_PRESENTER_MODEL`. It must be a model with structured output in strict mode; the contract test in `src/infrastructure/llm/strict-schema.test.ts` helps validate it.
+- **Changing the AI model**: `GROQ_READER_MODEL`, `GROQ_PRESENTER_MODEL` and `GROQ_PRESENTER_FALLBACK_MODELS` (tried in order when the main one makes a visitor wait; each model has its own quota). It must be a model with structured output in strict mode; the contract test in `src/infrastructure/llm/strict-schema.test.ts` helps validate it.
 - **Adding a component to the catalog**:
   1. Write its contract (name, description for the model and props) in `src/ui-contracts/contracts.ts` and add it to `catalog`.
   2. Write the React component in `src/ui/components/` and register it in `src/ui/kit.ts`.

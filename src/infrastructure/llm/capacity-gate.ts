@@ -29,11 +29,13 @@ export class CapacityGate {
   /** Takes a turn, or throws `RateLimitExceeded` with how long to wait and how many are ahead. */
   async enter(request: JsonRequest<unknown>): Promise<Turn> {
     const { model, priority, dailyShare } = this.options;
+    const { promptTokens, tokens } = estimateTokens(request);
     const decision = await this.capacity.requestTurn({
       model,
       subject: request.subject,
       priority,
-      tokens: estimateTokens(request),
+      tokens,
+      promptTokens,
       dailyShare,
     });
     if (decision.kind === "wait") throw new RateLimitExceeded(decision.waitMs, decision.ahead);
@@ -47,7 +49,9 @@ export class CapacityGate {
   }
 }
 
-export function estimateTokens({ system, user, output, maxOutputTokens }: JsonRequest<unknown>): number {
+/** The prompt's tokens, and those plus the expected answer's. */
+export function estimateTokens({ system, user, output, maxOutputTokens }: JsonRequest<unknown>) {
   const characters = system.length + user.length + JSON.stringify(output.jsonSchema).length;
-  return Math.ceil(characters / CHARACTERS_PER_TOKEN + maxOutputTokens * EXPECTED_SHARE_OF_ANSWER);
+  const promptTokens = Math.ceil(characters / CHARACTERS_PER_TOKEN);
+  return { promptTokens, tokens: promptTokens + Math.ceil(maxOutputTokens * EXPECTED_SHARE_OF_ANSWER) };
 }

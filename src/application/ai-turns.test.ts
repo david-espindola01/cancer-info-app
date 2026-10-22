@@ -7,6 +7,7 @@ const request = (changes: Partial<TurnRequest> = {}): TurnRequest => ({
   subject: "page:tumor",
   priority: "visitor",
   tokens: 5_000,
+  promptTokens: 5_000,
   dailyShare: 1,
   ...changes,
 });
@@ -37,11 +38,22 @@ describe("decideTurn", () => {
     expect(decideTurn(state({ calls }), request(), limits)).toEqual({ kind: "wait", waitMs: 41_000, ahead: 0 });
   });
 
+  it("as Groq does, lets a call start when its prompt fits in the minute, even if its answer will not", () => {
+    const calls = [{ at: secondsAgo(20), tokens: 4_100 }];
+
+    expect(decideTurn(state({ calls }), request({ promptTokens: 3_400, tokens: 4_400 }), limits)).toEqual({
+      kind: "granted",
+    });
+    expect(decideTurn(state({ calls }), request({ promptTokens: 4_000, tokens: 4_400 }), limits)).toMatchObject({
+      kind: "wait",
+    });
+  });
+
   it("serves visitors before the team's reading and before background work", () => {
     const queue = [
-      { subject: "prefetch", priority: "background" as const, since: secondsAgo(90), tokens: 5_000 },
-      { subject: "document:1", priority: "reader" as const, since: secondsAgo(60), tokens: 5_000 },
-      { subject: "page:tumor", priority: "visitor" as const, since: NOW, tokens: 5_000 },
+      { subject: "prefetch", priority: "background" as const, since: secondsAgo(90), promptTokens: 5_000 },
+      { subject: "document:1", priority: "reader" as const, since: secondsAgo(60), promptTokens: 5_000 },
+      { subject: "page:tumor", priority: "visitor" as const, since: NOW, promptTokens: 5_000 },
     ];
 
     expect(decideTurn(state({ queue }), request(), limits)).toEqual({ kind: "granted" });
@@ -56,9 +68,9 @@ describe("decideTurn", () => {
 
   it("among equals, the one who arrived first goes first", () => {
     const queue = [
-      { subject: "page:a", priority: "visitor" as const, since: secondsAgo(20), tokens: 5_000 },
-      { subject: "page:b", priority: "visitor" as const, since: secondsAgo(10), tokens: 5_000 },
-      { subject: "page:c", priority: "visitor" as const, since: secondsAgo(10), tokens: 5_000 },
+      { subject: "page:a", priority: "visitor" as const, since: secondsAgo(20), promptTokens: 5_000 },
+      { subject: "page:b", priority: "visitor" as const, since: secondsAgo(10), promptTokens: 5_000 },
+      { subject: "page:c", priority: "visitor" as const, since: secondsAgo(10), promptTokens: 5_000 },
     ];
 
     expect(decideTurn(state({ queue }), request({ subject: "page:a" }), limits)).toEqual({ kind: "granted" });
@@ -67,8 +79,8 @@ describe("decideTurn", () => {
 
   it("estimates the wait in minutes when the line does not fit in one", () => {
     const queue = [
-      { subject: "page:a", priority: "visitor" as const, since: secondsAgo(20), tokens: 5_000 },
-      { subject: "page:b", priority: "visitor" as const, since: secondsAgo(10), tokens: 5_000 },
+      { subject: "page:a", priority: "visitor" as const, since: secondsAgo(20), promptTokens: 5_000 },
+      { subject: "page:b", priority: "visitor" as const, since: secondsAgo(10), promptTokens: 5_000 },
     ];
 
     expect(decideTurn(state({ queue }), request(), limits)).toEqual({ kind: "wait", waitMs: 121_000, ahead: 2 });
