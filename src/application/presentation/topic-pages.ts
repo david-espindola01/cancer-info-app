@@ -37,12 +37,13 @@ type ReadyPage = TopicPage & { ui: string };
 type GenerationResult =
   | { kind: "ready"; page: ReadyPage }
   | { kind: "busy" }
-  | { kind: "wait"; waitMs: number }
+  | { kind: "wait"; waitMs: number; ahead: number }
   | { kind: "error" };
 
 export type TopicResult =
   | { kind: "ready"; page: ReadyPage; stale: boolean }
-  | { kind: "preparing"; retryMs: number }
+  /** `ahead` and `waitMs`: how many pages are waiting before this one, and roughly for how long. */
+  | { kind: "preparing"; retryMs: number; ahead: number; waitMs: number }
   | { kind: "limit" }
   | { kind: "error" }
   | { kind: "invalid" };
@@ -65,16 +66,18 @@ export async function getTopicPage(input: string, deps: VisitDependencies): Prom
     const stale = stored.corpusVersion !== version && stored.status !== "generating";
     return { kind: "ready", page: { ...stored, ui: stored.ui }, stale };
   }
-  if (!(await deps.allowGeneration())) return { kind: "limit" };
+  // Only the first request for a page counts against the visitor's limit: asking again for one
+  // that is already on its way (waiting in line, for example) does not.
+  if (!stored && !(await deps.allowGeneration())) return { kind: "limit" };
 
   const result = await generateTopicPage(slug, deps);
   switch (result.kind) {
     case "ready":
       return { kind: "ready", page: result.page, stale: false };
     case "busy":
-      return { kind: "preparing", retryMs: RETRY_WHEN_BUSY_MS };
+      return { kind: "preparing", retryMs: RETRY_WHEN_BUSY_MS, ahead: 0, waitMs: RETRY_WHEN_BUSY_MS };
     case "wait":
-      return { kind: "preparing", retryMs: Math.min(result.waitMs, MAX_RETRY_MS) };
+      return { kind: "preparing", retryMs: Math.min(result.waitMs, MAX_RETRY_MS), ahead: result.ahead, waitMs: result.waitMs };
     case "error":
       return { kind: "error" };
   }
@@ -96,7 +99,7 @@ export async function generateTopicPage(slug: string, deps: PresentationDependen
     return { kind: "ready", page: { ...page, status: "ready" } };
   } catch (error) {
     await deps.pages.release(slug);
-    if (error instanceof RateLimitExceeded) return { kind: "wait", waitMs: error.waitMs };
+    if (error instanceof RateLimitExceeded) return { kind: "wait", waitMs: error.waitMs, ahead: error.ahead };
     if (error instanceof InvalidAnswer) return { kind: "error" };
     throw error;
   }
@@ -116,6 +119,7 @@ async function present(slug: string, topic: string, found: FoundMemory[], presen
       output: pageOutput,
       system: PRESENTER_INSTRUCTIONS,
       user: presenterMessage(topic, material.text),
+      subject: `page:${slug}`,
       maxOutputTokens: PRESENTER_MAX_TOKENS,
     });
     const { page, keywords } = reviewPage(answer, material, slug);

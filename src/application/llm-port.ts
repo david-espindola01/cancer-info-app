@@ -11,6 +11,11 @@ export interface JsonRequest<T> {
   output: JsonOutput<T>;
   system: string;
   user: string;
+  /**
+   * What the request is about (for example, `page:tumor`): repeated requests for the same
+   * thing share one place in the line to use the AI.
+   */
+  subject: string;
   /** Cap on answer tokens (includes the model's reasoning). */
   maxOutputTokens: number;
 }

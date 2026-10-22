@@ -47,8 +47,10 @@ export async function processNextStep(
   await documents.setStatus(documentId, "processing");
   try {
     const chunk = await documents.nextPendingChunk(documentId);
-    const ask = <T>(request: Omit<JsonRequest<T>, "maxOutputTokens">) =>
-      retryInvalidAnswers(ATTEMPTS, () => reader.generateJson({ ...request, maxOutputTokens: READER_MAX_TOKENS }));
+    const ask = <T>(request: Omit<JsonRequest<T>, "maxOutputTokens" | "subject">) =>
+      retryInvalidAnswers(ATTEMPTS, () =>
+        reader.generateJson({ ...request, maxOutputTokens: READER_MAX_TOKENS, subject: `document:${documentId}` }),
+      );
 
     if (chunk) {
       const notes = await ask({ output: notesOutput, system: NOTES_INSTRUCTIONS, user: asDocument(chunk.text) });

@@ -1,5 +1,6 @@
 import type { Chunk, DocumentStatus, SourceDocument } from "@/domain/document";
 import type { TopicPage } from "@/domain/page";
+import type { TurnRequest } from "./ai-turns";
 import type { ChunkNotes, MemoryContent } from "./reading/schemas";
 
 export interface NewDocument {
@@ -71,4 +72,19 @@ export interface MemoryRepository {
   /** The topics most memories cover (to suggest where to go next). */
   mostCommonTopics(limit: number): Promise<string[]>;
   corpusVersion(): Promise<number>;
+}
+
+/** The line to use each AI model (see ai-turns.ts), shared by every server instance. */
+export interface AiCapacity {
+  /**
+   * Takes (or keeps) a place in line and, if it is this request's turn and its tokens fit,
+   * reserves them. Waiting requests must ask again before 2 minutes or they lose their place.
+   */
+  requestTurn(
+    request: TurnRequest,
+  ): Promise<{ kind: "granted"; callId: string } | { kind: "wait"; waitMs: number; ahead: number }>;
+  /** Replaces a call's reservation with the tokens it actually spent. */
+  settle(callId: string, tokens: number): Promise<void>;
+  /** The provider rejected the model's calls: nobody uses it for `waitMs`. */
+  block(model: string, waitMs: number): Promise<void>;
 }

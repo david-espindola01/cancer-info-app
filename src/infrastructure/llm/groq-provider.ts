@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { InvalidAnswer, RateLimitExceeded } from "@/application/llm-errors";
 import type { JsonRequest, LlmProvider } from "@/application/llm-port";
+import type { CapacityGate } from "./capacity-gate";
 import { recoverJson } from "./recover-json";
 import { strictModeViolations } from "./strict-schema";
 
@@ -19,6 +20,8 @@ export interface GroqOptions {
   fetch?: typeof fetch;
   /** Reports how many tokens each call spent (for the usage panel). If it fails, nothing is interrupted. */
   onUsage?: (usage: { model: string; tokens: number }) => Promise<void>;
+  /** If given, each call first waits its turn in the line to use the model. */
+  gate?: CapacityGate;
 }
 
 /** LLM provider on Groq with structured output in strict mode. */
@@ -35,7 +38,8 @@ export class GroqProvider implements LlmProvider {
     const schema = schemaForGroq(output.jsonSchema);
     const start = Date.now();
 
-    const { model, onUsage } = this.options;
+    const { model, onUsage, gate } = this.options;
+    const turn = await gate?.enter(request);
 
     let response: OpenAI.ChatCompletion;
     try {
@@ -55,7 +59,11 @@ export class GroqProvider implements LlmProvider {
       });
     } catch (error) {
       const recovered = recoverRejectedAnswer(error, output.validate);
-      if (!recovered) translateError(error);
+      if (!recovered) {
+        const known = knownError(error);
+        if (known instanceof RateLimitExceeded) await turn?.rejected(known.waitMs);
+        throw known;
+      }
       console.info(JSON.stringify({ event: "llm-answer-recovered", model, schema: output.name }));
       return recovered.value;
     }
@@ -70,7 +78,8 @@ export class GroqProvider implements LlmProvider {
         ms: Date.now() - start,
       }),
     );
-    await onUsage?.({ model, tokens: response.usage?.total_tokens ?? 0 }).catch((error: unknown) =>
+    const tokens = response.usage?.total_tokens ?? 0;
+    await Promise.all([turn?.settle(tokens), onUsage?.({ model, tokens })]).catch((error: unknown) =>
       console.error(JSON.stringify({ event: "llm-usage-not-recorded", model, error: String(error) })),
     );
     return validate(response.choices[0]?.message.content, output.validate);
@@ -104,19 +113,20 @@ function recoverRejectedAnswer<T>(error: unknown, validateOutput: (value: unknow
   }
 }
 
-function translateError(error: unknown): never {
+/** Groq's errors as the application understands them; anything else is passed on as is. */
+function knownError(error: unknown): unknown {
   if (error instanceof OpenAI.APIError && error.status === 429) {
     const waitMs = indicatedWait(error.headers) ?? DEFAULT_WAIT_MS;
     // Logged so pages that take long to appear can be diagnosed.
     console.warn(JSON.stringify({ event: "llm-rate-limit", waitMs, detail: error.message }));
-    throw new RateLimitExceeded(waitMs);
+    return new RateLimitExceeded(waitMs);
   }
   if (error instanceof OpenAI.APIError && error.status === 400) {
     // Logged so the cause (for example, an answer cut off by the token cap) can be diagnosed.
     console.warn(JSON.stringify({ event: "llm-invalid-answer", detail: error.message }));
-    throw new InvalidAnswer(error.message);
+    return new InvalidAnswer(error.message);
   }
-  throw error;
+  return error;
 }
 
 /** Reads `retry-after` (seconds) or `x-ratelimit-reset-tokens` (e.g. «11.6s», «1m2s»). */

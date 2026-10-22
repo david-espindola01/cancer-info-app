@@ -55,6 +55,7 @@ describe("getTopicPage", () => {
       "Sources",
     ]);
     expect(presenter.requests[0]!.user).toContain("<topic>tumor</topic>");
+    expect(presenter.requests[0]!.subject).toBe("page:tumor");
     expect(presenter.requests[0]!.user).toContain("[1] Un estudio sobre células");
     expect(await deps.pages.get("tumor")).toMatchObject({ status: "ready" });
   });
@@ -98,15 +99,15 @@ describe("getTopicPage", () => {
     const { deps } = await setUp();
     await deps.pages.reserve("tumor", "tumor");
 
-    expect(await getTopicPage("tumor", deps)).toEqual({ kind: "preparing", retryMs: 2_000 });
+    expect(await getTopicPage("tumor", deps)).toEqual({ kind: "preparing", retryMs: 2_000, ahead: 0, waitMs: 2_000 });
   });
 
   it("on the AI's limit, releases the turn and asks to wait as indicated", async () => {
     const { deps } = await setUp(() => {
-      throw new RateLimitExceeded(12_000);
+      throw new RateLimitExceeded(12_000, 3);
     });
 
-    expect(await getTopicPage("tumor", deps)).toEqual({ kind: "preparing", retryMs: 12_000 });
+    expect(await getTopicPage("tumor", deps)).toEqual({ kind: "preparing", retryMs: 12_000, ahead: 3, waitMs: 12_000 });
     expect(await deps.pages.get("tumor")).toMatchObject({ status: "error" });
   });
 
@@ -135,7 +136,7 @@ describe("getTopicPage", () => {
       throw new RateLimitExceeded(1_470_000);
     });
 
-    expect(await getTopicPage("tumor", deps)).toEqual({ kind: "preparing", retryMs: 30_000 });
+    expect(await getTopicPage("tumor", deps)).toEqual({ kind: "preparing", retryMs: 30_000, ahead: 0, waitMs: 1_470_000 });
   });
 
   it("releases the turn and propagates unexpected errors", async () => {
@@ -155,6 +156,21 @@ describe("getTopicPage", () => {
     expect(await getTopicPage("dieta", notAllowed)).toEqual({ kind: "limit" });
     expect(await getTopicPage("tumor", notAllowed)).toMatchObject({ kind: "ready" });
     expect(presenter.requests).toHaveLength(1);
+  });
+
+  it("does not count again a page that is already on its way, however many times it is asked for", async () => {
+    let calls = 0;
+    const { deps } = await setUp(() => {
+      calls += 1;
+      if (calls === 1) throw new RateLimitExceeded(30_000);
+      return VALID_PAGE;
+    });
+    const allowGeneration = vi.fn(async () => true);
+    const visit = { ...deps, allowGeneration };
+
+    expect(await getTopicPage("tumor", visit)).toMatchObject({ kind: "preparing" });
+    expect(await getTopicPage("tumor", visit)).toMatchObject({ kind: "ready" });
+    expect(allowGeneration).toHaveBeenCalledTimes(1);
   });
 
   it("rejects a topic without letters or digits", async () => {

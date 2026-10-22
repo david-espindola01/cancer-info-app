@@ -1,6 +1,7 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import type { TurnRequest } from "@/application/ai-turns";
 import { dailyBudgetContract } from "@/testing/contracts/daily-budget.contract";
 import { documentRepositoryContract } from "@/testing/contracts/document-repository.contract";
 import { memoryRepositoryContract } from "@/testing/contracts/memory-repository.contract";
@@ -9,6 +10,7 @@ import { rateLimiterContract } from "@/testing/contracts/rate-limiter.contract";
 import { emptyTables, MIGRATIONS_DIRECTORY, testConnection } from "@/testing/database";
 import { newDocument, sampleMemory } from "@/testing/factories";
 import { migrate } from "./migrator";
+import { PostgresAiCapacity } from "./postgres-ai-capacity";
 import { PostgresDailyBudget } from "./postgres-daily-budget";
 import { PostgresDocumentRepository } from "./postgres-document-repository";
 import { PostgresMemoryRepository } from "./postgres-memory-repository";
@@ -85,6 +87,89 @@ describe("PostgresRateLimiter", () => {
 
     expect(await limiter.allow("a", 1, 60)).toBe(true);
     expect(await limiter.allow("a", 1, 60)).toBe(false);
+  });
+});
+
+describe("PostgresAiCapacity", () => {
+  const limits = { perMinute: 8_000, perDay: 200_000 };
+  const turn = (subject: string, changes: Partial<TurnRequest> = {}): TurnRequest => ({
+    model: "m",
+    subject,
+    priority: "visitor",
+    tokens: 5_000,
+    dailyShare: 1,
+    ...changes,
+  });
+
+  beforeEach(() => emptyTables(sql));
+
+  it("grants turns while the minute's tokens last, and records what each call spent", async () => {
+    const capacity = new PostgresAiCapacity(sql, limits);
+
+    const first = await capacity.requestTurn(turn("page:a"));
+    expect(first).toEqual({ kind: "granted", callId: expect.any(String) });
+    expect(await capacity.requestTurn(turn("page:b"))).toMatchObject({ kind: "wait", ahead: 0 });
+
+    await capacity.settle(first.kind === "granted" ? first.callId : "", 2_000);
+    expect(await capacity.requestTurn(turn("page:b"))).toMatchObject({ kind: "granted" });
+  });
+
+  it("keeps the place of whoever asks again, and visitors go before background work", async () => {
+    const capacity = new PostgresAiCapacity(sql, limits);
+    await capacity.requestTurn(turn("page:busy", { tokens: 7_000 }));
+
+    await capacity.requestTurn(turn("prefetch:x", { priority: "background" }));
+    expect(await capacity.requestTurn(turn("page:a"))).toMatchObject({ kind: "wait", ahead: 0 });
+    expect(await capacity.requestTurn(turn("prefetch:x", { priority: "background" }))).toMatchObject({ ahead: 1 });
+  });
+
+  it("a request that stops asking loses its place", async () => {
+    const capacity = new PostgresAiCapacity(sql, limits);
+    await capacity.requestTurn(turn("page:busy", { tokens: 7_000 }));
+    await capacity.requestTurn(turn("page:gone"));
+
+    await sql`update ai_queue set seen_at = now() - interval '3 minutes' where subject = 'page:gone'`;
+
+    expect(await capacity.requestTurn(turn("page:a"))).toMatchObject({ ahead: 0 });
+  });
+
+  it("a granted turn leaves the line of every model", async () => {
+    const capacity = new PostgresAiCapacity(sql, limits);
+    await capacity.requestTurn(turn("page:busy", { model: "other", tokens: 7_000 }));
+    await capacity.requestTurn(turn("page:a", { model: "other" }));
+
+    expect(await capacity.requestTurn(turn("page:a"))).toMatchObject({ kind: "granted" });
+    expect(await sql`select subject from ai_queue`).toEqual([]);
+  });
+
+  it("a more urgent request for the same thing moves it up the line", async () => {
+    const capacity = new PostgresAiCapacity(sql, limits);
+    await capacity.requestTurn(turn("page:busy", { tokens: 7_000 }));
+    await capacity.requestTurn(turn("page:x", { priority: "background" }));
+
+    await capacity.requestTurn(turn("page:x"));
+
+    expect(await sql`select priority from ai_queue where subject = 'page:x'`).toEqual([{ priority: "visitor" }]);
+  });
+
+  it("nobody uses a model the provider blocked until the block ends", async () => {
+    const capacity = new PostgresAiCapacity(sql, limits);
+
+    await capacity.block("m", 60_000);
+    await capacity.block("m", 1_000);
+
+    const decision = await capacity.requestTurn(turn("page:a"));
+    expect(decision.kind === "wait" && decision.waitMs).toBeGreaterThan(55_000);
+  });
+
+  it("does not hand out more turns than fit when many ask at once", async () => {
+    const capacity = new PostgresAiCapacity(sql, limits);
+
+    const decisions = await Promise.all(
+      Array.from({ length: 6 }, (_, i) => capacity.requestTurn(turn(`page:${i}`, { tokens: 3_000 }))),
+    );
+
+    expect(decisions.filter((d) => d.kind === "granted")).toHaveLength(2);
   });
 });
 

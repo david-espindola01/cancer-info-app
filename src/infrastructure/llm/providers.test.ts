@@ -2,11 +2,12 @@ import { s } from "@hashbrownai/core";
 import { InvalidAnswer, RateLimitExceeded } from "@/application/llm-errors";
 import { skilletOutput } from "@/application/skillet-output";
 import { llmProviderContract } from "@/testing/contracts/llm-provider.contract";
+import type { CapacityGate } from "./capacity-gate";
 import { FakeProvider } from "./fake-provider";
 import { GroqProvider } from "./groq-provider";
 
 const schema = s.object("Greeting", { text: s.string("A greeting") });
-const request = { output: skilletOutput("greeting", schema), system: "Be kind", user: "Hello", maxOutputTokens: 3_000 };
+const request = { output: skilletOutput("greeting", schema), system: "Be kind", user: "Hello", subject: "page:x", maxOutputTokens: 3_000 };
 
 function httpResponse(status: number, body: unknown, headers: Record<string, string> = {}) {
   return new Response(JSON.stringify(body), {
@@ -160,6 +161,45 @@ describe("GroqProvider", () => {
     const { provider } = groqWith(httpResponse(400, { error: { message: "json_validate_failed", failed_generation } }));
 
     await expect(provider.generateJson(request)).rejects.toBeInstanceOf(InvalidAnswer);
+  });
+
+  describe("waiting its turn", () => {
+    const turn = { settle: vi.fn(async () => {}), rejected: vi.fn(async () => {}) };
+    const gateThat = (enter: () => Promise<typeof turn>) => ({ enter: vi.fn(enter) }) as unknown as CapacityGate;
+    const groqWithGate = (gate: CapacityGate, ...responses: Response[]) => {
+      const fakeFetch = vi.fn<typeof fetch>(async () => responses.shift()!);
+      return { fakeFetch, provider: new GroqProvider({ apiKey: "key", model: "m", effort: "low", fetch: fakeFetch, gate }) };
+    };
+
+    beforeEach(() => vi.clearAllMocks());
+
+    it("calls Groq only after getting its turn, and settles the tokens the call spent", async () => {
+      const gate = gateThat(async () => turn);
+      const { provider } = groqWithGate(gate, httpResponse(200, completion('{"text":"hola"}')));
+
+      await expect(provider.generateJson(request)).resolves.toEqual({ text: "hola" });
+      expect(gate.enter).toHaveBeenCalledWith(request);
+      expect(turn.settle).toHaveBeenCalledWith(15);
+    });
+
+    it("does not call Groq when it is not its turn", async () => {
+      const gate = gateThat(async () => {
+        throw new RateLimitExceeded(30_000, 2);
+      });
+      const { provider, fakeFetch } = groqWithGate(gate);
+
+      await expect(provider.generateJson(request)).rejects.toMatchObject({ waitMs: 30_000, ahead: 2 });
+      expect(fakeFetch).not.toHaveBeenCalled();
+    });
+
+    it("if Groq rejects the call anyway, frees the turn and blocks the model for the indicated time", async () => {
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+      const gate = gateThat(async () => turn);
+      const { provider } = groqWithGate(gate, httpResponse(429, { error: { message: "limit" } }, { "retry-after": "7" }));
+
+      await expect(provider.generateJson(request)).rejects.toBeInstanceOf(RateLimitExceeded);
+      expect(turn.rejected).toHaveBeenCalledWith(7_000);
+    });
   });
 
   it("translates content that is not JSON to InvalidAnswer", async () => {

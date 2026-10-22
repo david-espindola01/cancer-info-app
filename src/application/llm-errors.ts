@@ -1,6 +1,12 @@
-/** The provider hit its usage limit; it can be retried after `waitMs`. */
+/**
+ * The provider hit its usage limit (or it is not this request's turn yet); it can be retried
+ * after `waitMs`. `ahead` is how many requests are waiting before this one.
+ */
 export class RateLimitExceeded extends Error {
-  constructor(readonly waitMs: number) {
+  constructor(
+    readonly waitMs: number,
+    readonly ahead = 0,
+  ) {
     super(`AI provider limit reached; retry in ${waitMs} ms.`);
     this.name = "RateLimitExceeded";
   }
