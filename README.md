@@ -52,3 +52,13 @@ Also: `npm run e2e` (Playwright on a mobile profile) and `npm run lighthouse` (L
 ## Deployment
 
 Vercel deploys a preview for every PR and production when merging into `main`. Each environment uses its own Neon branch (`main`, `preview` and `desarrollo`), and the build applies the migrations to its database.
+
+## Contributing
+
+Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md) to set up the project with a local database and no AI key, and to open your first pull request.
+
+Live site: <https://cancer-info-app.vercel.app>
+
+## License
+
+[MIT](LICENSE)
