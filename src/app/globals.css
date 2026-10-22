@@ -1,73 +1,66 @@
 @import "tailwindcss";
 
 /*
- * Paleta de lectura fácil. Cada color tiene su versión intensa (texto, íconos, bordes) y
- * su fondo suave; todas las combinaciones superan el contraste WCAG AA (≥ 4,5:1) en modo
- * claro y oscuro (verificado al diseñarla: el mínimo es 5,3:1).
+ * Easy-reading palette. Each color has its strong version (text, icons, borders) and its
+ * soft background; every combination passes WCAG AA contrast (≥ 4.5:1) in light and dark
+ * mode (checked when designing it: the minimum is 5.3:1).
  */
 :root {
   --background: #fbfaf7;
   --foreground: #1a1a1a;
-  --tenue: #4a4a4a;
-  --superficie: #ffffff;
-  --borde: #dcd8cf;
+  --muted: #4a4a4a;
+  --surface: #ffffff;
+  --border: #dcd8cf;
 
-  --turquesa: #0f6b63;
-  --turquesa-fondo: #e2f3f0;
+  --teal: #0f6b63;
+  --teal-soft: #e2f3f0;
   --coral: #b03a12;
-  --coral-fondo: #fdece5;
-  --violeta: #6b2fb3;
-  --violeta-fondo: #f2eafc;
-  --azul: #1d4fd8;
-  --azul-fondo: #e8effe;
-  --ambar: #8a5300;
-  --ambar-fondo: #fdf1d8;
-  --verde: #2a6e2e;
-  --verde-fondo: #e6f4e7;
-  --rosa: #a01d4e;
-  --rosa-fondo: #fce9f0;
+  --coral-soft: #fdece5;
+  --violet: #6b2fb3;
+  --violet-soft: #f2eafc;
+  --blue: #1d4fd8;
+  --blue-soft: #e8effe;
+  --amber: #8a5300;
+  --amber-soft: #fdf1d8;
+  --green: #2a6e2e;
+  --green-soft: #e6f4e7;
+  --pink: #a01d4e;
+  --pink-soft: #fce9f0;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #121212;
     --foreground: #f2f2f2;
-    --tenue: #c4c4c4;
-    --superficie: #1c1c1c;
-    --borde: #3a3a3a;
+    --muted: #c4c4c4;
+    --surface: #1c1c1c;
+    --border: #3a3a3a;
 
-    --turquesa: #6ee0d0;
-    --turquesa-fondo: #123430;
+    --teal: #6ee0d0;
+    --teal-soft: #123430;
     --coral: #ff9b78;
-    --coral-fondo: #3a1d13;
-    --violeta: #c9a6ff;
-    --violeta-fondo: #2a1b40;
-    --azul: #9db8ff;
-    --azul-fondo: #16213d;
-    --ambar: #ffc566;
-    --ambar-fondo: #33240c;
-    --verde: #8fdc94;
-    --verde-fondo: #14301a;
-    --rosa: #ff94bb;
-    --rosa-fondo: #3a1424;
+    --coral-soft: #3a1d13;
+    --violet: #c9a6ff;
+    --violet-soft: #2a1b40;
+    --blue: #9db8ff;
+    --blue-soft: #16213d;
+    --amber: #ffc566;
+    --amber-soft: #33240c;
+    --green: #8fdc94;
+    --green-soft: #14301a;
+    --pink: #ff94bb;
+    --pink-soft: #3a1424;
   }
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-tenue: var(--tenue);
-  --color-superficie: var(--superficie);
-  --color-borde: var(--borde);
-  --color-acento: var(--turquesa);
-  --color-acento-suave: var(--turquesa-fondo);
-  --color-aviso-informativo: var(--azul);
-  --color-aviso-informativo-fondo: var(--azul-fondo);
-  --color-aviso-importante: var(--ambar);
-  --color-aviso-importante-fondo: var(--ambar-fondo);
-  --color-aviso-consulta: var(--violeta);
-  --color-aviso-consulta-fondo: var(--violeta-fondo);
-  /* Fuentes del sistema: no se descarga ninguna tipografía (conexiones lentas). */
+  --color-muted: var(--muted);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-accent: var(--teal);
+  /* System fonts: no typeface is downloaded (slow connections). */
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
@@ -80,36 +73,36 @@ body {
 }
 
 /*
- * Colores por componente: cada uno fija --c (intenso) y --cf (fondo suave), que los
- * componentes usan como `text-(--c)` y `bg-(--cf)`.
+ * Colors per component: each one sets --c (strong) and --cf (soft background), which the
+ * components use as `text-(--c)` and `bg-(--cf)`.
  */
-.color-turquesa { --c: var(--turquesa); --cf: var(--turquesa-fondo); }
-.color-coral { --c: var(--coral); --cf: var(--coral-fondo); }
-.color-violeta { --c: var(--violeta); --cf: var(--violeta-fondo); }
-.color-azul { --c: var(--azul); --cf: var(--azul-fondo); }
-.color-ambar { --c: var(--ambar); --cf: var(--ambar-fondo); }
-.color-verde { --c: var(--verde); --cf: var(--verde-fondo); }
-.color-rosa { --c: var(--rosa); --cf: var(--rosa-fondo); }
+.color-teal { --c: var(--teal); --cf: var(--teal-soft); }
+.color-coral { --c: var(--coral); --cf: var(--coral-soft); }
+.color-violet { --c: var(--violet); --cf: var(--violet-soft); }
+.color-blue { --c: var(--blue); --cf: var(--blue-soft); }
+.color-amber { --c: var(--amber); --cf: var(--amber-soft); }
+.color-green { --c: var(--green); --cf: var(--green-soft); }
+.color-pink { --c: var(--pink); --cf: var(--pink-soft); }
 
-/* Listas de tarjetas y secciones: cada elemento toma el siguiente color de la paleta. */
-.ciclo-color > :nth-child(7n + 1),
-.bloques > section:nth-of-type(7n + 1) { --c: var(--turquesa); --cf: var(--turquesa-fondo); }
-.ciclo-color > :nth-child(7n + 2),
-.bloques > section:nth-of-type(7n + 2) { --c: var(--coral); --cf: var(--coral-fondo); }
-.ciclo-color > :nth-child(7n + 3),
-.bloques > section:nth-of-type(7n + 3) { --c: var(--violeta); --cf: var(--violeta-fondo); }
-.ciclo-color > :nth-child(7n + 4),
-.bloques > section:nth-of-type(7n + 4) { --c: var(--azul); --cf: var(--azul-fondo); }
-.ciclo-color > :nth-child(7n + 5),
-.bloques > section:nth-of-type(7n + 5) { --c: var(--ambar); --cf: var(--ambar-fondo); }
-.ciclo-color > :nth-child(7n + 6),
-.bloques > section:nth-of-type(7n + 6) { --c: var(--verde); --cf: var(--verde-fondo); }
-.ciclo-color > :nth-child(7n + 7),
-.bloques > section:nth-of-type(7n + 7) { --c: var(--rosa); --cf: var(--rosa-fondo); }
+/* Card lists and sections: each item takes the next palette color. */
+.color-cycle > :nth-child(7n + 1),
+.blocks > section:nth-of-type(7n + 1) { --c: var(--teal); --cf: var(--teal-soft); }
+.color-cycle > :nth-child(7n + 2),
+.blocks > section:nth-of-type(7n + 2) { --c: var(--coral); --cf: var(--coral-soft); }
+.color-cycle > :nth-child(7n + 3),
+.blocks > section:nth-of-type(7n + 3) { --c: var(--violet); --cf: var(--violet-soft); }
+.color-cycle > :nth-child(7n + 4),
+.blocks > section:nth-of-type(7n + 4) { --c: var(--blue); --cf: var(--blue-soft); }
+.color-cycle > :nth-child(7n + 5),
+.blocks > section:nth-of-type(7n + 5) { --c: var(--amber); --cf: var(--amber-soft); }
+.color-cycle > :nth-child(7n + 6),
+.blocks > section:nth-of-type(7n + 6) { --c: var(--green); --cf: var(--green-soft); }
+.color-cycle > :nth-child(7n + 7),
+.blocks > section:nth-of-type(7n + 7) { --c: var(--pink); --cf: var(--pink-soft); }
 
-/* Palabra clave elegible: subrayado grueso y área táctil cómoda. */
-.tema-subrayado {
-  color: var(--turquesa);
+/* A keyword people can pick: thick underline and a comfortable touch area. */
+.topic-link {
+  color: var(--teal);
   font-weight: 600;
   text-decoration: underline;
   text-decoration-thickness: 3px;
@@ -120,18 +113,18 @@ body {
   transition: background-color 150ms ease;
 }
 
-.tema-subrayado:hover {
-  background: var(--turquesa-fondo);
+.topic-link:hover {
+  background: var(--teal-soft);
 }
 
 :focus-visible {
-  outline: 3px solid var(--turquesa);
+  outline: 3px solid var(--teal);
   outline-offset: 2px;
 }
 
-/* ---------- Movimiento ---------- */
+/* ---------- Motion ---------- */
 
-@keyframes aparecer {
+@keyframes appear {
   from {
     opacity: 0;
     transform: translateY(14px);
@@ -142,39 +135,39 @@ body {
   }
 }
 
-/* Los bloques de una página entran uno tras otro: deslizan hacia arriba y aparecen. */
-.bloques > * {
-  animation: aparecer 450ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+/* A page's blocks come in one after another: they slide up and appear. */
+.blocks > * {
+  animation: appear 450ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
-.bloques > :nth-child(2) { animation-delay: 70ms; }
-.bloques > :nth-child(3) { animation-delay: 140ms; }
-.bloques > :nth-child(4) { animation-delay: 210ms; }
-.bloques > :nth-child(5) { animation-delay: 280ms; }
-.bloques > :nth-child(6) { animation-delay: 350ms; }
-.bloques > :nth-child(n + 7) { animation-delay: 420ms; }
+.blocks > :nth-child(2) { animation-delay: 70ms; }
+.blocks > :nth-child(3) { animation-delay: 140ms; }
+.blocks > :nth-child(4) { animation-delay: 210ms; }
+.blocks > :nth-child(5) { animation-delay: 280ms; }
+.blocks > :nth-child(6) { animation-delay: 350ms; }
+.blocks > :nth-child(n + 7) { animation-delay: 420ms; }
 
-/* Al abrir una pregunta, la respuesta se desliza hacia abajo. */
+/* When a question opens, the answer slides down. */
 details[open] > :not(summary) {
-  animation: aparecer 260ms ease-out both;
+  animation: appear 260ms ease-out both;
 }
 
-/* Tarjetas que se pueden tocar: se elevan un poco. */
-.elevable {
+/* Cards that can be tapped: they lift a little. */
+.liftable {
   transition:
     transform 160ms ease,
     box-shadow 160ms ease;
 }
-.elevable:hover {
+.liftable:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 20px -10px rgb(0 0 0 / 0.35);
 }
 
 /*
- * Transiciones entre páginas (View Transitions de React): al avanzar, la página sale
- * hacia la izquierda y la nueva entra desde la derecha; al volver, al revés. El
- * esqueleto de carga baja y se desvanece; el contenido sube y aparece.
+ * Transitions between pages (React View Transitions): going forward, the page leaves to
+ * the left and the new one enters from the right; going back, the other way around. The
+ * loading skeleton moves down and fades; the content moves up and appears.
  */
-@keyframes desvanecer {
+@keyframes fade {
   from {
     opacity: 0;
     filter: blur(3px);
@@ -185,16 +178,16 @@ details[open] > :not(summary) {
   }
 }
 
-@keyframes deslizar-x {
+@keyframes slide-x {
   from {
-    translate: var(--desplazamiento);
+    translate: var(--offset);
   }
   to {
     translate: 0;
   }
 }
 
-@keyframes deslizar-y {
+@keyframes slide-y {
   from {
     transform: translateY(12px);
   }
@@ -203,47 +196,47 @@ details[open] > :not(summary) {
   }
 }
 
-::view-transition-old(.avanzar) {
-  --desplazamiento: -60px;
+::view-transition-old(.forward) {
+  --offset: -60px;
   animation:
-    150ms ease-in both desvanecer reverse,
-    400ms ease-in-out both deslizar-x reverse;
+    150ms ease-in both fade reverse,
+    400ms ease-in-out both slide-x reverse;
 }
-::view-transition-new(.avanzar) {
-  --desplazamiento: 60px;
+::view-transition-new(.forward) {
+  --offset: 60px;
   animation:
-    210ms ease-out 150ms both desvanecer,
-    400ms ease-in-out both deslizar-x;
+    210ms ease-out 150ms both fade,
+    400ms ease-in-out both slide-x;
 }
-::view-transition-old(.volver) {
-  --desplazamiento: 60px;
+::view-transition-old(.back) {
+  --offset: 60px;
   animation:
-    150ms ease-in both desvanecer reverse,
-    400ms ease-in-out both deslizar-x reverse;
+    150ms ease-in both fade reverse,
+    400ms ease-in-out both slide-x reverse;
 }
-::view-transition-new(.volver) {
-  --desplazamiento: -60px;
+::view-transition-new(.back) {
+  --offset: -60px;
   animation:
-    210ms ease-out 150ms both desvanecer,
-    400ms ease-in-out both deslizar-x;
+    210ms ease-out 150ms both fade,
+    400ms ease-in-out both slide-x;
 }
-::view-transition-old(.bajar) {
+::view-transition-old(.down) {
   animation:
-    150ms ease-out both desvanecer reverse,
-    150ms ease-out both deslizar-y reverse;
+    150ms ease-out both fade reverse,
+    150ms ease-out both slide-y reverse;
 }
-::view-transition-new(.subir) {
+::view-transition-new(.up) {
   animation:
-    210ms ease-in 150ms both desvanecer,
-    400ms ease-in both deslizar-y;
+    210ms ease-in 150ms both fade,
+    400ms ease-in both slide-y;
 }
 
-/* El encabezado del sitio queda quieto: es el punto de referencia mientras el contenido se mueve. */
-::view-transition-group(encabezado-sitio) {
+/* The site header stays still: it is the reference point while the content moves. */
+::view-transition-group(site-header) {
   animation: none;
 }
 
-/* Quien prefiere menos movimiento no ve animaciones. */
+/* People who prefer less motion see no animations. */
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,

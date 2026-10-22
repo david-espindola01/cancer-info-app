@@ -1,70 +1,67 @@
 /**
- * Reglas de arquitectura: las dependencias solo apuntan hacia adentro
- * (app → aplicacion → dominio). Cada capa explica sus reglas en su README.
+ * Architecture rules: dependencies only point inwards
+ * (app → application → domain). Each layer explains its rules in its README.
  */
-const noEsPrueba = "\\.test\\.tsx?$";
+const notATest = "\\.test\\.tsx?$";
 
 /** @type {import('dependency-cruiser').IConfiguration} */
 module.exports = {
   forbidden: [
     {
-      name: "sin-ciclos",
+      name: "no-cycles",
       severity: "error",
       from: {},
       to: { circular: true },
     },
     {
-      name: "dominio-es-puro",
-      comment: "dominio/ solo puede usar dominio/ y módulos nativos de Node.",
+      name: "domain-is-pure",
+      comment: "domain/ may only use domain/ and Node's built-in modules.",
       severity: "error",
-      from: { path: "^src/dominio/", pathNot: noEsPrueba },
-      to: { pathNot: "^src/dominio/", dependencyTypesNot: ["core"] },
+      from: { path: "^src/domain/", pathNot: notATest },
+      to: { pathNot: "^src/domain/", dependencyTypesNot: ["core"] },
     },
     {
-      name: "aplicacion-solo-depende-de-dominio",
+      name: "application-only-depends-on-domain",
       comment:
-        "aplicacion/ depende de puertos (interfaces), no de implementaciones. " +
-        "Puede usar Skillet (@hashbrownai/core) y el catálogo de ui-contratos/ (datos sin React) " +
-        "para definir lo que deben responder los agentes.",
+        "application/ depends on ports (interfaces), not on implementations. " +
+        "It may use Skillet (@hashbrownai/core) and the ui-contracts/ catalog (data without React) " +
+        "to define what the agents must answer.",
       severity: "error",
-      from: { path: "^src/aplicacion/", pathNot: noEsPrueba },
+      from: { path: "^src/application/", pathNot: notATest },
       to: {
-        pathNot: ["^src/(dominio|aplicacion|ui-contratos)/", "^node_modules/@hashbrownai/core/"],
+        pathNot: ["^src/(domain|application|ui-contracts)/", "^node_modules/@hashbrownai/core/"],
         dependencyTypesNot: ["core"],
       },
     },
     {
-      name: "ui-contratos-sin-react",
-      comment: "ui-contratos/ se comparte con el servidor: sin React ni infraestructura.",
+      name: "ui-contracts-without-react",
+      comment: "ui-contracts/ is shared with the server: no React or infrastructure.",
       severity: "error",
-      from: { path: "^src/ui-contratos/", pathNot: noEsPrueba },
+      from: { path: "^src/ui-contracts/", pathNot: notATest },
       to: {
-        pathNot: [
-          "^src/(dominio|ui-contratos)/",
-          "^node_modules/@hashbrownai/core/",
-        ],
+        pathNot: ["^src/(domain|ui-contracts)/", "^node_modules/@hashbrownai/core/"],
         dependencyTypesNot: ["core"],
       },
     },
     {
-      name: "ui-no-conoce-el-servidor",
+      name: "ui-does-not-know-the-server",
       severity: "error",
       from: { path: "^src/ui/" },
-      to: { path: "^src/(aplicacion|infraestructura)/" },
+      to: { path: "^src/(application|infrastructure)/" },
     },
     {
-      name: "infraestructura-no-conoce-la-entrega",
+      name: "infrastructure-does-not-know-delivery",
       severity: "error",
-      from: { path: "^src/infraestructura/" },
+      from: { path: "^src/infrastructure/" },
       to: { path: "^src/(app|ui)/" },
     },
     {
-      name: "app-usa-infraestructura-solo-por-el-contenedor",
+      name: "app-uses-infrastructure-only-through-the-container",
       severity: "error",
       from: { path: "^src/app/" },
       to: {
-        path: "^src/infraestructura/",
-        pathNot: "^src/infraestructura/contenedor\\.ts$",
+        path: "^src/infrastructure/",
+        pathNot: "^src/infrastructure/container\\.ts$",
       },
     },
   ],

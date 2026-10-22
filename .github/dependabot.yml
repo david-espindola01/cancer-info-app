@@ -5,10 +5,10 @@ updates:
     schedule:
       interval: weekly
     groups:
-      # react y react-dom deben tener siempre la misma versión.
+      # react and react-dom must always have the same version.
       react:
         patterns: ["react", "react-dom"]
-      desarrollo:
+      development:
         dependency-type: development
         update-types: [minor, patch]
   - package-ecosystem: github-actions

@@ -40,17 +40,17 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# documentación interna (no se versiona)
+# internal documentation (not versioned)
 /docs/
 
-# plantilla de variables de entorno (sí se versiona)
+# environment variables template (versioned)
 !.env.example
 
-# pruebas e2e
+# e2e tests
 /test-results/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
 
-# reportes de Lighthouse
+# Lighthouse reports
 /.lighthouseci/

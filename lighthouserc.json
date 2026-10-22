@@ -3,8 +3,8 @@
     "collect": {
       "url": [
         "http://localhost:3000/",
-        "http://localhost:3000/tema/sin-informacion-de-prueba",
-        "http://localhost:3000/subir"
+        "http://localhost:3000/topic/no-information-test",
+        "http://localhost:3000/upload"
       ],
       "startServerCommand": "npm run start",
       "startServerReadyPattern": "Ready",

@@ -1,6 +1,6 @@
 # ui
 
-Componentes React que implementan los contratos de `ui-contratos/` y el kit de Hashbrown que los registra.
+React components that implement the `ui-contracts/` contracts, and the Hashbrown kit that registers them. Their visible text is in Spanish (the audience's language).
 
-- Puede importar: `ui-contratos/`, `dominio/`, React y Hashbrown.
-- No puede importar: `aplicacion/` ni `infraestructura/`.
+- May import: `ui-contracts/`, `domain/`, React and Hashbrown.
+- May not import: `application/` or `infrastructure/`.

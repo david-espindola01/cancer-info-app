@@ -13,8 +13,8 @@ permissions:
   contents: read
 
 jobs:
-  calidad:
-    name: Calidad (lint, tipos, código muerto, duplicados, capas)
+  quality:
+    name: Quality (lint, types, dead code, duplicates, layers)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -26,26 +26,26 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run knip
-      - run: npm run duplicados
-      - run: npm run dependencias
-      # Solo dependencias de producción: las de desarrollo no llegan al usuario.
+      - run: npm run duplicates
+      - run: npm run dependencies
+      # Production dependencies only: development ones never reach the user.
       - run: npm audit --omit=dev --audit-level=high
 
-  pruebas:
-    name: Pruebas unitarias y de componentes
+  tests:
+    name: Unit and component tests
     runs-on: ubuntu-latest
     services:
       postgres:
-        # Misma versión mayor que Neon en producción.
+        # Same major version as Neon in production.
         image: postgres:18
         env:
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: pruebas
+          POSTGRES_DB: tests
         ports: ["5432:5432"]
         options: >-
           --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
     env:
-      DATABASE_URL_PRUEBAS: postgres://postgres:postgres@localhost:5432/pruebas
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/tests
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -53,16 +53,16 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npm run test:cobertura
+      - run: npm run test:coverage
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: cobertura
+          name: coverage
           path: coverage/
           retention-days: 7
 
   e2e:
-    name: Build y pruebas e2e
+    name: Build and e2e tests
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -74,11 +74,11 @@ jobs:
         options: >-
           --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
     env:
-      # El build aplica las migraciones sobre DATABASE_URL; el servidor e2e usa DATABASE_URL_PRUEBAS.
+      # The build applies the migrations to DATABASE_URL; the e2e server uses TEST_DATABASE_URL.
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/e2e
-      DATABASE_URL_PRUEBAS: postgres://postgres:postgres@localhost:5432/e2e
-      ADMIN_CLAVE: clave-e2e
-      SESION_SECRETO: secreto-e2e-solo-para-ci-0123456789abcdef
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/e2e
+      ADMIN_PASSWORD: e2e-password
+      SESSION_SECRET: e2e-secret-only-for-ci-0123456789abcdef
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -92,20 +92,20 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: reporte-playwright
+          name: playwright-report
           path: playwright-report/
           retention-days: 7
-      # Lighthouse en perfil móvil con red lenta simulada, contra el build de producción.
+      # Lighthouse on a mobile profile with a simulated slow network, against the production build.
       - name: Lighthouse
         env:
-          LLM_PROVEEDOR: falso
+          LLM_PROVIDER: fake
         run: |
           export CHROME_PATH="$(node -e "import('@playwright/test').then((m) => console.log(m.chromium.executablePath()))")"
           npm run lighthouse
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: reporte-lighthouse
+          name: lighthouse-report
           path: .lighthouseci/
           include-hidden-files: true
           retention-days: 7

@@ -1,39 +1,35 @@
 import { NextResponse, type NextRequest } from "next/server";
-import type { Documento } from "@/dominio/documento";
-import { NOMBRE_COOKIE_SESION, sesion } from "@/infraestructura/contenedor";
+import type { SourceDocument } from "@/domain/document";
+import { session, SESSION_COOKIE_NAME } from "@/infrastructure/container";
 
-/** Lo que el navegador ve de un documento (sin datos internos como la huella). */
-export interface DocumentoVista {
+/** What the browser sees of a document (without internal data such as the fingerprint). */
+export interface DocumentView {
   id: string;
-  titulo: string;
-  estado: Documento["estado"];
+  title: string;
+  status: SourceDocument["status"];
   error: string | null;
-  creadoEn: string;
+  createdAt: string;
 }
 
-export const aVista = ({ id, titulo, estado, error, creadoEn }: Documento): DocumentoVista => ({
+export const toView = ({ id, title, status, error, createdAt }: SourceDocument): DocumentView => ({
   id,
-  titulo,
-  estado,
+  title,
+  status,
   error,
-  creadoEn: creadoEn.toISOString(),
+  createdAt: createdAt.toISOString(),
 });
 
-export const errorJson = (mensaje: string, estado: number) =>
-  NextResponse.json({ error: mensaje }, { status: estado });
+export const jsonError = (message: string, status: number) => NextResponse.json({ error: message }, { status });
 
-export const sesionValida = (request: NextRequest) =>
-  sesion.valida(request.cookies.get(NOMBRE_COOKIE_SESION)?.value);
+export const validSession = (request: NextRequest) => session.valid(request.cookies.get(SESSION_COOKIE_NAME)?.value);
 
-export const NO_AUTORIZADO = () => errorJson("Inicia sesión para continuar.", 401);
+export const UNAUTHORIZED = () => jsonError("Inicia sesión para continuar.", 401);
 
-/** El cuerpo JSON como objeto, o null si no es un objeto JSON válido. */
-export async function leerObjetoJson(request: NextRequest): Promise<Record<string, unknown> | null> {
+/** The JSON body as an object, or null if it is not a valid JSON object. */
+export async function readJsonObject(request: NextRequest): Promise<Record<string, unknown> | null> {
   try {
-    const cuerpo: unknown = await request.json();
-    return cuerpo && typeof cuerpo === "object" && !Array.isArray(cuerpo)
-      ? (cuerpo as Record<string, unknown>)
-      : null;
+    const body: unknown = await request.json();
+    return body && typeof body === "object" && !Array.isArray(body) ? (body as Record<string, unknown>) : null;
   } catch {
     return null;
   }

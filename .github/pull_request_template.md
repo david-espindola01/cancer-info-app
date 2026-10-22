@@ -1,16 +1,16 @@
-## Qué cambia
+## What changes
 
-<!-- Resumen breve y fase del plan a la que pertenece. -->
+<!-- Short summary and the plan phase it belongs to. -->
 
-## Cómo se probó
+## How it was tested
 
-<!-- Pruebas agregadas o actualizadas, y verificación manual si aplica. -->
+<!-- Tests added or updated, and manual verification if relevant. -->
 
 ## Checklist
 
-- [ ] `npm run verificar` pasa en local (lint, tipos, knip, duplicados, capas, pruebas con cobertura y build).
-- [ ] Toda lógica nueva tiene su prueba; todo bug corregido tiene una prueba que lo reproduce.
-- [ ] Sin código muerto, duplicado, comentado, `console.log` sueltos ni `TODO` sin issue asociado.
-- [ ] Sin componentes de cliente innecesarios (`"use client"` solo donde hay interacción).
-- [ ] Las llamadas nuevas al LLM respetan el presupuesto de tokens y lo registran.
-- [ ] PR pequeño y enfocado en un solo objetivo.
+- [ ] `npm run verify` passes locally (lint, types, knip, duplicates, layers, tests with coverage and build).
+- [ ] All new logic has its test; every fixed bug has a test that reproduces it.
+- [ ] No dead, duplicated or commented-out code, stray `console.log` or `TODO` without an issue.
+- [ ] No unnecessary client components (`"use client"` only where there is interaction).
+- [ ] New LLM calls respect the token budget and record it.
+- [ ] Small PR focused on a single goal.

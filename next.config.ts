@@ -1,13 +1,13 @@
 import type { NextConfig } from "next";
 
-const enProduccion = process.env.NODE_ENV === "production";
+const inProduction = process.env.NODE_ENV === "production";
 
 /**
- * Política de contenido: todo se sirve desde el propio sitio (la IA se llama desde el
- * servidor, nunca desde el navegador). Next.js necesita scripts y estilos en línea para
- * hidratar la página; en desarrollo además usa eval, por eso la política es solo de producción.
+ * Content policy: everything is served from the site itself (the AI is called from the
+ * server, never from the browser). Next.js needs inline scripts and styles to hydrate the
+ * page; in development it also uses eval, so the policy only applies in production.
  */
-const politicaContenido = [
+const contentPolicy = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
@@ -20,24 +20,24 @@ const politicaContenido = [
   "object-src 'none'",
 ].join("; ");
 
-const encabezadosSeguridad = [
+const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
-  ...(enProduccion ? [{ key: "Content-Security-Policy", value: politicaContenido }] : []),
+  ...(inProduction ? [{ key: "Content-Security-Policy", value: contentPolicy }] : []),
 ];
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   experimental: {
-    // Conexiones rurales inestables: si la señal se cae al navegar, Next.js reintenta
-    // solo cuando vuelve, y useOffline permite avisarle a la persona qué pasa.
+    // Unstable rural connections: if the signal drops while navigating, Next.js retries
+    // only when it comes back, and useOffline lets the page tell the person what is happening.
     useOffline: true,
   },
   async headers() {
-    return [{ source: "/:ruta*", headers: encabezadosSeguridad }];
+    return [{ source: "/:path*", headers: securityHeaders }];
   },
   turbopack: {
     rules: {
