@@ -1,43 +1,43 @@
 import type { s } from "@hashbrownai/core";
 import { exposeComponent } from "@hashbrownai/react";
 import {
-  contratoAviso,
-  contratoCifra,
-  contratoComparacion,
-  contratoDefinicion,
-  contratoEncabezado,
-  contratoFuentes,
-  contratoListaPuntos,
-  contratoParrafo,
-  contratoPasos,
-  contratoPreguntasRespuestas,
-  contratoSeccion,
-  contratoSiguientesTemas,
-  contratoSinInformacion,
-} from "@/ui-contratos/contratos";
-import { Aviso, Cifra, Definicion, type TipoAviso } from "./componentes/destacados";
-import { Encabezado, Parrafo, Seccion } from "./componentes/estructura";
-import { Comparacion, ListaPuntos, Pasos, PreguntasRespuestas } from "./componentes/listas";
-import { Fuentes, SiguientesTemas, SinInformacion } from "./componentes/navegacion";
+  bulletListContract,
+  comparisonContract,
+  definitionContract,
+  faqContract,
+  headingContract,
+  nextTopicsContract,
+  noInformationContract,
+  noticeContract,
+  paragraphContract,
+  sectionContract,
+  sourcesContract,
+  statContract,
+  stepsContract,
+} from "@/ui-contracts/contracts";
+import { Definition, Notice, Stat, type NoticeKind } from "./components/highlights";
+import { BulletList, Comparison, Faq, Steps } from "./components/lists";
+import { NextTopics, NoInformation, Sources } from "./components/navigation";
+import { Heading, Paragraph, Section } from "./components/structure";
 
-/** Cada contrato del catálogo con el componente que lo dibuja. */
-export const componentesExpuestos = [
-  exposeComponent(Seccion, contratoSeccion),
-  exposeComponent(Encabezado, contratoEncabezado),
-  exposeComponent(Parrafo, contratoParrafo),
-  exposeComponent(ListaPuntos, contratoListaPuntos),
-  exposeComponent(Pasos, contratoPasos),
-  exposeComponent(Cifra, contratoCifra),
-  exposeComponent(Comparacion, contratoComparacion),
-  exposeComponent(Definicion, contratoDefinicion),
-  exposeComponent(PreguntasRespuestas, contratoPreguntasRespuestas),
-  exposeComponent(Aviso, {
-    ...contratoAviso,
-    // Skillet convierte la unión de `tipo` en una tupla cuyo orden cambia de una compilación a
-    // otra; el valor es el mismo (lo cubren las pruebas de PaginaGenerada), solo se fija su tipo.
-    props: { ...contratoAviso.props, tipo: contratoAviso.props.tipo as unknown as s.Schema<TipoAviso> },
+/** Each catalog contract with the component that renders it. */
+export const exposedComponents = [
+  exposeComponent(Section, sectionContract),
+  exposeComponent(Heading, headingContract),
+  exposeComponent(Paragraph, paragraphContract),
+  exposeComponent(BulletList, bulletListContract),
+  exposeComponent(Steps, stepsContract),
+  exposeComponent(Stat, statContract),
+  exposeComponent(Comparison, comparisonContract),
+  exposeComponent(Definition, definitionContract),
+  exposeComponent(Faq, faqContract),
+  exposeComponent(Notice, {
+    ...noticeContract,
+    // Skillet turns the `kind` union into a tuple whose order changes between builds; the
+    // value is the same (covered by the GeneratedPage tests), only its type is pinned.
+    props: { ...noticeContract.props, kind: noticeContract.props.kind as unknown as s.Schema<NoticeKind> },
   }),
-  exposeComponent(Fuentes, contratoFuentes),
-  exposeComponent(SiguientesTemas, contratoSiguientesTemas),
-  exposeComponent(SinInformacion, contratoSinInformacion),
+  exposeComponent(Sources, sourcesContract),
+  exposeComponent(NextTopics, nextTopicsContract),
+  exposeComponent(NoInformation, noInformationContract),
 ];

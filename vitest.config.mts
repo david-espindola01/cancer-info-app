@@ -3,9 +3,9 @@ import react from "@vitejs/plugin-react";
 import { loadEnv } from "vite";
 import { defineConfig } from "vitest/config";
 
-// Carga .env.local (p. ej. DATABASE_URL_PRUEBAS) sin pisar variables ya definidas, como las de CI.
-for (const [clave, valor] of Object.entries(loadEnv("test", process.cwd(), ""))) {
-  process.env[clave] ??= valor;
+// Loads .env.local (e.g. TEST_DATABASE_URL) without overriding variables already defined, such as CI's.
+for (const [key, value] of Object.entries(loadEnv("test", process.cwd(), ""))) {
+  process.env[key] ??= value;
 }
 
 export default defineConfig({
@@ -19,7 +19,7 @@ export default defineConfig({
       {
         extends: true,
         test: {
-          name: "unidad",
+          name: "unit",
           environment: "node",
           include: ["src/**/*.test.ts"],
           exclude: ["src/**/*.int.test.ts"],
@@ -37,11 +37,11 @@ export default defineConfig({
       {
         extends: true,
         test: {
-          name: "integracion",
+          name: "integration",
           environment: "node",
           include: ["src/**/*.int.test.ts"],
-          globalSetup: ["./src/pruebas/preparar-bd.ts"],
-          // Todas las pruebas comparten una sola base de datos.
+          globalSetup: ["./src/testing/prepare-database.ts"],
+          // Every test shares a single database.
           fileParallelism: false,
           testTimeout: 20_000,
           hookTimeout: 60_000,
@@ -53,9 +53,9 @@ export default defineConfig({
       include: ["src/**/*.{ts,tsx}"],
       exclude: [
         "src/**/*.test.{ts,tsx}",
-        // Utilidades compartidas de las pruebas.
-        "src/pruebas/**",
-        // El layout raíz solo arma <html>/<body>; lo cubren las pruebas e2e.
+        // Utilities shared by the tests.
+        "src/testing/**",
+        // The root layout only builds <html>/<body>; the e2e tests cover it.
         "src/app/layout.tsx",
       ],
       thresholds: {
@@ -63,8 +63,8 @@ export default defineConfig({
         functions: 80,
         branches: 80,
         statements: 80,
-        "src/dominio/**": { lines: 90, functions: 90, branches: 90, statements: 90 },
-        "src/aplicacion/**": { lines: 90, functions: 90, branches: 90, statements: 90 },
+        "src/domain/**": { lines: 90, functions: 90, branches: 90, statements: 90 },
+        "src/application/**": { lines: 90, functions: 90, branches: 90, statements: 90 },
       },
     },
   },
