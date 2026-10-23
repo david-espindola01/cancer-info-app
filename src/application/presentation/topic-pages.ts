@@ -1,4 +1,4 @@
-import type { TopicPage } from "@/domain/page";
+import { hasInformation, pageTitle, type TopicPage, type TopicSummary } from "@/domain/page";
 import { normalizeSlug } from "@/domain/slug";
 import { InvalidAnswer, RateLimitExceeded, retryInvalidAnswers } from "../llm-errors";
 import type { LlmProvider } from "../llm-port";
@@ -6,6 +6,9 @@ import type { FoundMemory, MemoryRepository, NewPage, PageRepository } from "../
 import { PRESENTER_INSTRUCTIONS, presenterMessage } from "./instructions";
 import { prepareMaterial } from "./material";
 import { noInformationPage, pageOutput, reviewPage } from "./page-ui";
+
+/** How many topics «Mis temas» lists at most (each one is a short line). */
+const MAX_LISTED_TOPICS = 200;
 
 /** How many memories are used as sources of a page (besides the character cap). */
 const MAX_SOURCES = 3;
@@ -109,7 +112,7 @@ export async function generateTopicPage(slug: string, deps: PresentationDependen
 async function noInformation(slug: string, topic: string, memories: MemoryRepository) {
   const topics = await memories.mostCommonTopics(SUGGESTED_TOPICS);
   const { page, keywords } = reviewPage(noInformationPage(topic), { sources: [], topics }, slug);
-  return { ui: JSON.stringify(page), sources: [], keywords };
+  return { ui: JSON.stringify(page), sources: [], documentIds: [], keywords };
 }
 
 async function present(slug: string, topic: string, found: FoundMemory[], presenter: LlmProvider) {
@@ -123,6 +126,21 @@ async function present(slug: string, topic: string, found: FoundMemory[], presen
       maxOutputTokens: PRESENTER_MAX_TOKENS,
     });
     const { page, keywords } = reviewPage(answer, material, slug);
-    return { ui: JSON.stringify(page), sources: material.sources, keywords };
+    return { ui: JSON.stringify(page), sources: material.sources, documentIds: material.documentIds, keywords };
   });
+}
+
+/** Spanish order that ignores «¿» and accents: «¿Qué es…?» goes under Q. */
+const byTitle = new Intl.Collator("es", { ignorePunctuation: true, sensitivity: "base" });
+
+/**
+ * The topics whose page is ready, by title: they open at once, without waiting for the AI.
+ * Pages that say the sources do not cover the topic are left out.
+ */
+export async function readyTopics(pages: PageRepository): Promise<TopicSummary[]> {
+  const ready = await pages.listReady(MAX_LISTED_TOPICS);
+  return ready
+    .filter((page) => hasInformation(page.ui))
+    .map((page) => ({ slug: page.slug, title: pageTitle(page.ui) ?? page.slug.replaceAll("-", " ") }))
+    .sort((a, b) => byTitle.compare(a.title, b.title));
 }

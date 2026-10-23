@@ -28,7 +28,7 @@ export class PostgresMemoryRepository implements MemoryRepository {
     const rows = await this.sql<{ document_id: string; title: string; content: MemoryContent }[]>`
       select m.document_id, d.title, m.content
       from memories m
-      join documents d on d.id = m.document_id,
+      join documents d on d.id = m.document_id and d.active,
       to_tsquery('es', ${terms.join(" | ")}) query,
       lateral (
         select greatest(
@@ -44,9 +44,16 @@ export class PostgresMemoryRepository implements MemoryRepository {
 
   async mostCommonTopics(limit: number) {
     const rows = await this.sql<{ topic: string }[]>`
-      select topic from memories, jsonb_array_elements_text(content->'topics') topic
+      select topic from memories m
+      join documents d on d.id = m.document_id and d.active,
+      jsonb_array_elements_text(m.content->'topics') topic
       group by topic order by count(*) desc, topic limit ${limit}`;
     return rows.map((row) => row.topic);
+  }
+
+  async corpusChanged() {
+    const [corpus] = await this.sql<{ version: number }[]>`update corpus set version = version + 1 returning version`;
+    return corpus!.version;
   }
 
   async corpusVersion() {

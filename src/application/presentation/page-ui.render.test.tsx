@@ -2,8 +2,8 @@ import { render, screen } from "@testing-library/react";
 import { GeneratedPage } from "@/ui/generated-page";
 import { noInformationPage } from "./page-ui";
 
-/** What the server builds without the AI must render with the browser's catalog. */
-describe("noInformationPage in the browser", () => {
+/** What the server builds without the AI must render with the catalog's components. */
+describe("noInformationPage rendered", () => {
   it("renders with its title and the link back home", () => {
     render(<GeneratedPage ui={JSON.stringify(noInformationPage("dolor de espalda"))} sources={[]} />);
 

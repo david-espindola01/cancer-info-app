@@ -3,10 +3,11 @@ import { expect, test } from "@playwright/test";
 /**
  * JavaScript (compressed, as it travels over the network) a phone downloads when opening a
  * topic page. On a slow 3G network, every 100 KB is ~1 s more of waiting.
- * Measured in Phase 8: ~233 KB, of which ~95 KB are Hashbrown with @ag-ui/core and zod
- * (they cannot be dropped because @ag-ui/core does not declare "sideEffects": false).
+ * It was ~234 KB while Hashbrown rendered the page in the browser; since the page is checked
+ * and rendered on the server it is ~140 KB (Next.js and React). The margin is for the
+ * route trail and «Mis temas», which are small client components.
  */
-const JS_BUDGET_KB = 240;
+const JS_BUDGET_KB = 160;
 
 test("a topic page downloads little JavaScript", async ({ page }) => {
   test.skip(!process.env.CI, "Only measured against the production build (in CI)");

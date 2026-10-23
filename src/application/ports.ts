@@ -22,6 +22,10 @@ export interface DocumentRepository {
   /** Notes of the chunks already processed, in order. */
   listNotes(documentId: string): Promise<ChunkNotes[]>;
   progress(documentId: string): Promise<{ processed: number; total: number }>;
+  /** Turns a document on or off for the agents. Returns it, or null if it does not exist. */
+  setActive(id: string, active: boolean): Promise<SourceDocument | null>;
+  /** Deletes a document with everything read from it. Returns false if it did not exist. */
+  remove(id: string): Promise<boolean>;
 }
 
 export interface FoundMemory {
@@ -46,6 +50,13 @@ export interface PageRepository {
   release(slug: string): Promise<void>;
   /** How many pages are ready to be served. */
   countReady(): Promise<number>;
+  /** The pages ready to be served (slug and content), at most `limit`. */
+  listReady(limit: number): Promise<{ slug: string; ui: string }[]>;
+  /**
+   * Forgets the pages built from a document (and those whose sources are unknown), so
+   * they are built again without it.
+   */
+  forgetDocument(documentId: string): Promise<void>;
 }
 
 /** Request limit per key (for example, per visitor) within a time window. */
@@ -67,11 +78,13 @@ export interface DailyBudget {
 export interface MemoryRepository {
   /** Saves (or replaces) a document's memory and bumps the corpus version. Returns the new version. */
   save(documentId: string, content: MemoryContent): Promise<number>;
-  /** Memories related to the query, from most to least relevant. */
+  /** Memories of active documents related to the query, from most to least relevant. */
   search(query: string, limit: number): Promise<FoundMemory[]>;
-  /** The topics most memories cover (to suggest where to go next). */
+  /** The topics most memories of active documents cover (to suggest where to go next). */
   mostCommonTopics(limit: number): Promise<string[]>;
   corpusVersion(): Promise<number>;
+  /** The knowledge changed in another way (a document turned on, off or deleted): bumps the version. */
+  corpusChanged(): Promise<number>;
 }
 
 /** The line to use each AI model (see ai-turns.ts), shared by every server instance. */

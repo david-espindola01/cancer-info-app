@@ -7,6 +7,7 @@ interface PageRow {
   topic: string;
   ui: string | null;
   sources: PageSource[];
+  document_ids: string[] | null;
   keywords: string[];
   corpus_version: number;
   status: PageStatus;
@@ -26,6 +27,7 @@ export class PostgresPageRepository implements PageRepository {
       topic: row.topic,
       ui: row.ui,
       sources: row.sources,
+      documentIds: row.document_ids,
       keywords: row.keywords,
       corpusVersion: row.corpus_version,
       status: row.status,
@@ -49,6 +51,7 @@ export class PostgresPageRepository implements PageRepository {
         topic = ${page.topic},
         ui = ${page.ui},
         sources = ${this.sql.json(page.sources as unknown as JSONValue)},
+        document_ids = ${page.documentIds}::uuid[],
         keywords = ${page.keywords},
         corpus_version = ${page.corpusVersion},
         status = 'ready',
@@ -56,10 +59,22 @@ export class PostgresPageRepository implements PageRepository {
       where slug = ${page.slug}`;
   }
 
+  async forgetDocument(documentId: string) {
+    await this.sql`
+      delete from pages
+      where status <> 'generating' and (document_ids is null or ${documentId}::uuid = any(document_ids))`;
+  }
+
   async countReady() {
     const [row] = await this.sql<{ total: number }[]>`
       select count(*)::int as total from pages where ui is not null`;
     return row!.total;
+  }
+
+  async listReady(limit: number) {
+    const rows = await this.sql<{ slug: string; ui: string }[]>`
+      select slug, ui from pages where ui is not null order by topic limit ${limit}`;
+    return rows.map(({ slug, ui }) => ({ slug, ui }));
   }
 
   async release(slug: string) {

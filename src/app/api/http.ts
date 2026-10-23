@@ -7,17 +7,24 @@ export interface DocumentView {
   id: string;
   title: string;
   status: SourceDocument["status"];
+  active: boolean;
   error: string | null;
   createdAt: string;
 }
 
-export const toView = ({ id, title, status, error, createdAt }: SourceDocument): DocumentView => ({
+export const toView = ({ id, title, status, error, active, createdAt }: SourceDocument): DocumentView => ({
   id,
   title,
   status,
   error,
+  active,
   createdAt: createdAt.toISOString(),
 });
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Ids come from the address: anything that is not a UUID cannot be a document. */
+export const isUuid = (id: string) => UUID.test(id);
 
 export const jsonError = (message: string, status: number) => NextResponse.json({ error: message }, { status });
 

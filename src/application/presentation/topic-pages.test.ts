@@ -4,7 +4,7 @@ import { InMemoryPageRepository } from "@/infrastructure/in-memory/in-memory-pag
 import { FakeProvider } from "@/infrastructure/llm/fake-provider";
 import { newDocument, sampleMemory } from "@/testing/factories";
 import { RateLimitExceeded } from "../llm-errors";
-import { generateTopicPage, getTopicPage, type VisitDependencies } from "./topic-pages";
+import { generateTopicPage, getTopicPage, readyTopics, type VisitDependencies } from "./topic-pages";
 
 const VALID_PAGE = {
   ui: [
@@ -32,7 +32,7 @@ async function setUp(respond: ConstructorParameters<typeof FakeProvider>[0] = ()
 
 describe("getTopicPage", () => {
   it("generates the page with the found sources, reviews it and stores it", async () => {
-    const { deps, presenter } = await setUp();
+    const { deps, presenter, documentId } = await setUp();
 
     const result = await getTopicPage("Tumor", deps);
 
@@ -40,6 +40,7 @@ describe("getTopicPage", () => {
     const page = result.kind === "ready" ? result.page : null;
     expect(page).toMatchObject({
       slug: "tumor",
+      documentIds: [documentId],
       topic: "tumor",
       status: "ready",
       corpusVersion: 1,
@@ -187,5 +188,31 @@ describe("generateTopicPage", () => {
 
     expect(await generateTopicPage("tumor", deps)).toEqual({ kind: "busy" });
     expect(presenter.requests).toHaveLength(0);
+  });
+});
+
+describe("readyTopics", () => {
+  async function stored(...pages: { slug: string; ui: unknown[] }[]) {
+    const repo = new InMemoryPageRepository();
+    for (const page of pages) {
+      await repo.reserve(page.slug, page.slug);
+      await repo.save({ slug: page.slug, topic: page.slug, ui: JSON.stringify({ ui: page.ui }), sources: [], documentIds: [], keywords: [], corpusVersion: 1 });
+    }
+    return repo;
+  }
+
+  it("lists the ready topics by title, leaving out the ones without information", async () => {
+    const repo = await stored(
+      { slug: "tumor", ui: [{ Heading: { props: { title: "¿Qué es un tumor?" } } }] },
+      { slug: "dolor-de-espalda", ui: [{ Heading: { props: { title: "Dolor" } } }, { NoInformation: { props: {} } }] },
+      { slug: "celulas-madre", ui: [{ Paragraph: { props: { text: "Sin título" } } }] },
+      { slug: "ejercicio", ui: [{ Heading: { props: { title: "Actividad física" } } }] },
+    );
+
+    expect(await readyTopics(repo)).toEqual([
+      { slug: "ejercicio", title: "Actividad física" },
+      { slug: "celulas-madre", title: "celulas madre" },
+      { slug: "tumor", title: "¿Qué es un tumor?" },
+    ]);
   });
 });

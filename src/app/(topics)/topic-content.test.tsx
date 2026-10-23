@@ -24,6 +24,7 @@ const readyPage = {
   topic: "tumor",
   ui: SAMPLE_PAGE,
   sources: SAMPLE_SOURCES,
+  documentIds: [],
   keywords: ["benigno", "maligno"],
   corpusVersion: 1,
   status: "ready" as const,
@@ -50,6 +51,22 @@ describe("TopicContent", () => {
 
     expect(topics.regenerate).not.toHaveBeenCalled();
     expect(topics.prefetch).toHaveBeenCalledWith(["benigno", "maligno"]);
+  });
+
+  it("names the page in the trail with its title, and the starting topic has no trail", async () => {
+    await show({ kind: "ready", page: readyPage, stale: false });
+    expect(screen.getByRole("navigation", { name: "Tu recorrido" })).toHaveTextContent("Inicio›¿Qué es el cáncer?");
+    expect(JSON.parse(localStorage.getItem("temas-leidos")!)[0]).toEqual({ slug: "tumor", title: "¿Qué es el cáncer?" });
+
+    await show({ kind: "ready", page: { ...readyPage, slug: "que-es-el-cancer" }, stale: false });
+    expect(screen.getAllByRole("navigation", { name: "Tu recorrido" })).toHaveLength(1);
+  });
+
+  it("if the page has no title, the trail uses the topic", async () => {
+    const untitled = JSON.stringify({ ui: [{ Paragraph: { props: { text: "Solo texto" } } }] });
+    await show({ kind: "ready", page: { ...readyPage, ui: untitled }, stale: false });
+
+    expect(screen.getByRole("navigation", { name: "Tu recorrido" })).toHaveTextContent("Inicio›tumor");
   });
 
   it("if it is stale, shows it anyway, regenerates it and then prefetches", async () => {
