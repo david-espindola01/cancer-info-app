@@ -69,4 +69,25 @@ export function documentRepositoryContract(create: () => Promise<DocumentReposit
 
     expect(await repo.progress(document.id)).toEqual({ processed: 0, total: 0 });
   });
+
+  it("registers documents turned on, and turns them off and on", async () => {
+    const { document } = await repo.register(newDocument());
+    expect(document.active).toBe(true);
+
+    expect(await repo.setActive(document.id, false)).toMatchObject({ id: document.id, active: false });
+    expect(await repo.get(document.id)).toMatchObject({ active: false });
+    expect(await repo.setActive(document.id, true)).toMatchObject({ active: true });
+    expect(await repo.setActive(randomUUID(), false)).toBeNull();
+  });
+
+  it("deletes a document with its chunks", async () => {
+    const { document } = await repo.register(newDocument({ chunks: ["uno"] }));
+
+    expect(await repo.remove(document.id)).toBe(true);
+
+    expect(await repo.get(document.id)).toBeNull();
+    expect(await repo.list()).toEqual([]);
+    expect(await repo.progress(document.id)).toEqual({ processed: 0, total: 0 });
+    expect(await repo.remove(document.id)).toBe(false);
+  });
 }

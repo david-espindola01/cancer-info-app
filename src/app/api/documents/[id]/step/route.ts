@@ -1,17 +1,15 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { documents } from "@/infrastructure/container";
-import { jsonError, UNAUTHORIZED, validSession } from "../../../http";
+import { isUuid, jsonError, UNAUTHORIZED, validSession } from "../../../http";
 
 /** A step makes at most one request to the model (~1–5 s); the margin covers slow networks. */
 export const maxDuration = 60;
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function POST(request: NextRequest, context: RouteContext<"/api/documents/[id]/step">) {
   if (!validSession(request)) return UNAUTHORIZED();
 
   const { id } = await context.params;
-  const result = UUID.test(id) ? await documents.processStep(id) : { kind: "not-found" as const };
+  const result = isUuid(id) ? await documents.processStep(id) : { kind: "not-found" as const };
   if (result.kind === "not-found") return jsonError("No existe ese documento.", 404);
   return NextResponse.json(result);
 }

@@ -24,6 +24,7 @@ const readyPage = {
   topic: "tumor",
   ui: SAMPLE_PAGE,
   sources: SAMPLE_SOURCES,
+  documentIds: [],
   keywords: ["benigno", "maligno"],
   corpusVersion: 1,
   status: "ready" as const,

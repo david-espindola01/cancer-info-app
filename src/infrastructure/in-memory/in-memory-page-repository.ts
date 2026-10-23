@@ -13,7 +13,9 @@ export class InMemoryPageRepository implements PageRepository {
 
   async get(slug: string) {
     const page = this.pages.get(slug);
-    return page ? { ...page, sources: [...page.sources], keywords: [...page.keywords] } : null;
+    return page
+      ? { ...page, sources: [...page.sources], documentIds: page.documentIds && [...page.documentIds], keywords: [...page.keywords] }
+      : null;
   }
 
   async reserve(slug: string, topic: string) {
@@ -21,13 +23,20 @@ export class InMemoryPageRepository implements PageRepository {
     const since = this.changes.get(slug) ?? 0;
     if (current?.status === "generating" && this.now() - since < ABANDONED_TURN_MS) return false;
 
-    const base = current ?? { slug, topic, ui: null, sources: [], keywords: [], corpusVersion: -1 };
+    const base = current ?? { slug, topic, ui: null, sources: [], documentIds: null, keywords: [], corpusVersion: -1 };
     this.update({ ...base, status: "generating" });
     return true;
   }
 
   async save(page: NewPage) {
     this.update({ ...page, status: "ready" });
+  }
+
+  async forgetDocument(documentId: string) {
+    for (const page of [...this.pages.values()]) {
+      const builtFromIt = page.documentIds === null || page.documentIds.includes(documentId);
+      if (page.status !== "generating" && builtFromIt) this.pages.delete(page.slug);
+    }
   }
 
   async countReady() {

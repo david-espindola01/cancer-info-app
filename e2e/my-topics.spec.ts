@@ -6,6 +6,9 @@ const FIRST = "/topic/astronomia-de-saturno";
 async function openTopic(page: import("@playwright/test").Page, path: string) {
   await page.goto(path);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 20_000 });
+  // The server's HTML shows before the page is interactive; the visit is recorded once it is,
+  // which is also when «Escuchar» appears.
+  await expect(page.getByRole("button", { name: /Escuchar esta página/ })).toBeVisible();
 }
 
 test("the trail shows the way and «Mis temas» remembers what was read", async ({ page }) => {

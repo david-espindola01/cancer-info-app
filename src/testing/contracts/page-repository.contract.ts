@@ -1,10 +1,14 @@
 import type { NewPage, PageRepository } from "@/application/ports";
 
+const DOCUMENT_A = "00000000-0000-4000-8000-00000000000a";
+const DOCUMENT_B = "00000000-0000-4000-8000-00000000000b";
+
 const samplePage = (changes: Partial<NewPage> = {}): NewPage => ({
   slug: "tumor",
   topic: "tumor",
   ui: '{"ui":[]}',
   sources: [{ number: 1, title: "Estudio", reference: "García (2024). Revista" }],
+  documentIds: [DOCUMENT_A],
   keywords: ["benigno", "maligno"],
   corpusVersion: 3,
   ...changes,
@@ -77,5 +81,20 @@ export function pageRepositoryContract(create: () => Promise<PageRepository>) {
 
     expect(await repo.get("tumor")).toMatchObject({ status: "error", ui: '{"ui":[]}' });
     expect(await repo.reserve("tumor", "tumor")).toBe(true);
+  });
+
+  it("forgets the pages built from a document and those of unknown origin, and keeps the rest", async () => {
+    const page = (slug: string, documentIds: string[] | null) => samplePage({ slug, topic: slug, documentIds });
+    for (const [slug, documentIds] of [["a", [DOCUMENT_A]], ["ab", [DOCUMENT_A, DOCUMENT_B]], ["b", [DOCUMENT_B]], ["none", []], ["old", null]] as const) {
+      await repo.reserve(slug, slug);
+      await repo.save(page(slug, documentIds === null ? null : [...documentIds]));
+    }
+    await repo.reserve("busy", "busy");
+
+    await repo.forgetDocument(DOCUMENT_A);
+
+    const left = await Promise.all(["a", "ab", "b", "none", "old", "busy"].map((slug) => repo.get(slug)));
+    expect(left.map((p) => p?.slug ?? null)).toEqual([null, null, "b", "none", null, "busy"]);
+    expect(left[2]?.documentIds).toEqual([DOCUMENT_B]);
   });
 }

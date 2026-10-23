@@ -81,4 +81,28 @@ export function memoryRepositoryContract(create: () => Promise<Repositories>) {
 
     expect(await repos.memories.search("¿? y o", 5)).toEqual([]);
   });
+
+  it("leaves out the memories of documents that are turned off or deleted", async () => {
+    const off = await documentWithMemory("Apagado", "Melanoma y sol.");
+    const gone = await documentWithMemory("Borrado", "Melanoma y piel.");
+    const on = await documentWithMemory("Encendido", "Melanoma y control.");
+    await repos.memories.save(off, sampleMemory({ plainSummary: "Melanoma y sol.", topics: ["sol"] }));
+    await repos.memories.save(on, sampleMemory({ plainSummary: "Melanoma y control.", topics: ["control"] }));
+
+    await repos.documents.setActive(off, false);
+    await repos.documents.remove(gone);
+
+    expect((await repos.memories.search("melanoma", 5)).map((m) => m.documentId)).toEqual([on]);
+    expect(await repos.memories.mostCommonTopics(5)).toEqual(["control"]);
+
+    await repos.documents.setActive(off, true);
+    expect(await repos.memories.mostCommonTopics(5)).toEqual(["control", "sol"]);
+  });
+
+  it("bumps the corpus version when the knowledge changes in other ways", async () => {
+    await documentWithMemory("A", "texto");
+
+    expect(await repos.memories.corpusChanged()).toBe(2);
+    expect(await repos.memories.corpusVersion()).toBe(2);
+  });
 }
