@@ -22,7 +22,6 @@
   },
   "dependencies": {
     "@hashbrownai/core": "^0.7.0",
-    "@hashbrownai/react": "^0.7.0",
     "next": "16.4.2",
     "openai": "^7.39.0",
     "postgres": "^3.4.9",

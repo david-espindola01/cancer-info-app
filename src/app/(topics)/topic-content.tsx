@@ -1,9 +1,14 @@
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { after, connection } from "next/server";
+import { pageTitle } from "@/domain/page";
 import { topics } from "@/infrastructure/container";
 import { GeneratedPage } from "@/ui/generated-page";
 import { visitorIp } from "../visitor-ip";
+import { ListenButton } from "./listen-button";
+import { RouteTrail } from "./route-trail";
+import { SaveOfflineButton } from "./save-offline-button";
+import { STARTING_TOPIC } from "./starting-topic";
 import { TopicWaiting } from "./topic-waiting";
 
 /**
@@ -41,7 +46,17 @@ export async function TopicContent({ slug }: { slug: string }) {
         if (stale) await topics.regenerate(page.slug);
         await topics.prefetch(page.keywords);
       });
-      return <GeneratedPage ui={page.ui} sources={page.sources} />;
+      const topic = { slug: page.slug, title: pageTitle(page.ui) ?? page.topic };
+      return (
+        <>
+          <RouteTrail topic={topic} start={page.slug === STARTING_TOPIC} />
+          <div className="flex flex-wrap items-start gap-3">
+            <ListenButton />
+            <SaveOfflineButton topic={topic} />
+          </div>
+          <GeneratedPage ui={page.ui} sources={page.sources} />
+        </>
+      );
     }
   }
 }

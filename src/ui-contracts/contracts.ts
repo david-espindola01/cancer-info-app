@@ -2,8 +2,8 @@ import { s, type UiComponentDefinition } from "@hashbrownai/core";
 
 /*
  * Catalog of generic interfaces the Presenter Agent can use to build a page. They are
- * contracts without React: the server uses them for the schema the model follows and the
- * browser to register the components. None of them refers to a specific topic: they can
+ * contracts without React: the server uses them for the schema the model follows and to
+ * check each component before rendering it. None of them refers to a specific topic: they can
  * present any information.
  *
  * The descriptions guide the model and travel in every request, so they are short: what
@@ -16,7 +16,7 @@ const markedText = (description: string) => s.string(`${description}; may mark [
 
 const sourceNumber = s.number("Source number, from the list");
 
-export const sectionContract = {
+const sectionContract = {
   name: "Section",
   description: "Groups components about one idea under a title.",
   children: "any",
@@ -50,7 +50,7 @@ export const bulletListContract = {
   },
 } satisfies UiComponentDefinition;
 
-export const stepsContract = {
+const stepsContract = {
   name: "Steps",
   description: "Actions or stages in order.",
   children: false,
@@ -74,7 +74,7 @@ export const statContract = {
   },
 } satisfies UiComponentDefinition;
 
-export const comparisonContract = {
+const comparisonContract = {
   name: "Comparison",
   description: "Two or three things side by side (e.g. myth and fact).",
   children: false,
@@ -90,7 +90,7 @@ export const comparisonContract = {
   },
 } satisfies UiComponentDefinition;
 
-export const definitionContract = {
+const definitionContract = {
   name: "Definition",
   description: "Explains a difficult word with everyday words.",
   children: false,
@@ -100,7 +100,7 @@ export const definitionContract = {
   },
 } satisfies UiComponentDefinition;
 
-export const faqContract = {
+const faqContract = {
   name: "Faq",
   description: "Questions people often ask, with short answers.",
   children: false,

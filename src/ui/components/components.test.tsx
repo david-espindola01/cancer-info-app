@@ -1,6 +1,5 @@
 import { render, screen } from "@testing-library/react";
 import { accessibilityViolations } from "@/testing/accessibility";
-import { SourcesProvider } from "../sources";
 import { Notice } from "./highlights";
 import { BulletList, Steps } from "./lists";
 import { NoInformation, Sources } from "./navigation";
@@ -48,9 +47,7 @@ describe("catalog components with minimal props", () => {
 
   it("Sources shows nothing if none of the cited sources exists", () => {
     const { container } = render(
-      <SourcesProvider value={[{ number: 1, title: "A", reference: "R" }]}>
-        <Sources numbers={[7]} />
-      </SourcesProvider>,
+      <Sources numbers={[7]} available={[{ number: 1, title: "A", reference: "R" }]} />,
     );
 
     expect(container).toBeEmptyDOMElement();

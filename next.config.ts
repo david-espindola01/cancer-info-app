@@ -37,7 +37,11 @@ const nextConfig: NextConfig = {
     useOffline: true,
   },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // The service worker is always asked for again, so a new version reaches every phone.
+      { source: "/sw.js", headers: [{ key: "Cache-Control", value: "no-cache" }] },
+    ];
   },
   turbopack: {
     rules: {

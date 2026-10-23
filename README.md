@@ -3,7 +3,7 @@
 Informational site about cancer for the general public, rural communities included, based **only** on the scientific articles the team uploads. The site's content is in Spanish (its audience's language); the code is in English.
 
 - **Reader Agent**: reads each PDF in parts and writes a faithful *memory* in plain Spanish.
-- **Presenter Agent**: uses those memories to build each page from a catalog of generic interfaces ([Hashbrown](https://hashbrown.dev)). It underlines keywords that guide the reader to the next topic.
+- **Presenter Agent**: uses those memories to build each page from a catalog of generic interfaces ([Hashbrown](https://hashbrown.dev)). The page is checked and rendered on the server, so phones receive plain HTML and never download Hashbrown. It underlines keywords that guide the reader to the next topic.
 - **Prefetching**: while the person reads, the system prepares the next pages. Each page is cached and serves every visitor.
 
 **Stack**: Next.js 16 · Hashbrown 0.7 · Groq (`gpt-oss`) · Postgres (Neon) · Vercel
@@ -44,7 +44,7 @@ Also: `npm run e2e` (Playwright on a mobile profile) and `npm run lighthouse` (L
 - **Changing the AI model**: `GROQ_READER_MODEL`, `GROQ_PRESENTER_MODEL` and `GROQ_PRESENTER_FALLBACK_MODELS` (tried in order when the main one makes a visitor wait; each model has its own quota). It must be a model with structured output in strict mode; the contract test in `src/infrastructure/llm/strict-schema.test.ts` helps validate it.
 - **Adding a component to the catalog**:
   1. Write its contract (name, description for the model and props) in `src/ui-contracts/contracts.ts` and add it to `catalog`.
-  2. Write the React component in `src/ui/components/` and register it in `src/ui/kit.ts`.
+  2. Write the React component in `src/ui/components/` (a server component) and register it in `src/ui/kit.ts`.
   3. The tests check that the catalog stays generic, accessible and compatible with Groq's strict mode.
 - **Tuning how much is prefetched**: `PREFETCH_PER_VISIT` and `PREFETCH_DAILY_MAX`.
 - **AI quota**: every call waits its turn in each model's line (`src/application/ai-turns.ts`), so Groq's limits are never exceeded. Visitors go first, then the team's reading, then prefetching, which stops when 40 % of the day is left. If Groq's plan changes, set `GROQ_TOKENS_PER_MINUTE` and `GROQ_TOKENS_PER_DAY`.

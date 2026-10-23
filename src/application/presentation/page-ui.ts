@@ -51,8 +51,8 @@ function withoutGenericDescriptions(node: unknown): unknown {
 }
 
 /**
- * The page the Presenter must return: the schema of the whole catalog (the browser
- * validates the same components). Groq in strict mode guarantees its shape; here only the
+ * The page the Presenter must return: the schema of the whole catalog (the page is
+ * rendered against the same contracts). Groq in strict mode guarantees its shape; here only the
  * overall structure is checked before its content is reviewed.
  */
 export const pageOutput: JsonOutput<PageUi> = {
