@@ -55,5 +55,13 @@
   "engines": {
     "node": ">=24"
   },
-  "type": "module"
+  "type": "module",
+  "overrides": {
+    "@ag-ui/client": {
+      "zod": "^4.6.7"
+    },
+    "@ag-ui/proto": {
+      "zod": "^4.6.7"
+    }
+  }
 }
