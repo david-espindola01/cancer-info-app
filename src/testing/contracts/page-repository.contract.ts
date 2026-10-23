@@ -54,6 +54,20 @@ export function pageRepositoryContract(create: () => Promise<PageRepository>) {
     expect(await repo.countReady()).toBe(1);
   });
 
+  it("lists the pages that can be served, by topic, up to the limit", async () => {
+    for (const topic of ["tumor", "dieta", "celulas"]) {
+      await repo.reserve(topic, topic);
+      await repo.save(samplePage({ slug: topic, topic, ui: `{"ui":["${topic}"]}` }));
+    }
+    await repo.reserve("pendiente", "pendiente");
+
+    expect(await repo.listReady(2)).toEqual([
+      { slug: "celulas", ui: '{"ui":["celulas"]}' },
+      { slug: "dieta", ui: '{"ui":["dieta"]}' },
+    ]);
+    expect((await repo.listReady(10)).map((page) => page.slug)).toEqual(["celulas", "dieta", "tumor"]);
+  });
+
   it("releasing without saving marks the error, keeps the previous page and allows retrying", async () => {
     await repo.reserve("tumor", "tumor");
     await repo.save(samplePage());
