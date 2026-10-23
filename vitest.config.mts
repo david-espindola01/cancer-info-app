@@ -30,6 +30,8 @@ export default defineConfig({
         test: {
           name: "ui",
           environment: "jsdom",
+          // Node 25 brings its own localStorage, which hides jsdom's: the browser's one is used.
+          execArgv: ["--no-experimental-webstorage"],
           include: ["src/**/*.test.tsx"],
           setupFiles: ["./vitest.setup.ts"],
         },
