@@ -1,7 +1,7 @@
 import type { Sql } from "postgres";
 import type { AiPriority } from "@/application/ai-turns";
 import type { LlmProvider } from "@/application/llm-port";
-import { generateTopicPage, getTopicPage } from "@/application/presentation/topic-pages";
+import { generateTopicPage, getTopicPage, readyTopics } from "@/application/presentation/topic-pages";
 import { prefetchTopics } from "@/application/presentation/prefetch-topics";
 import { processNextStep } from "@/application/reading/process-next-step";
 import { registerDocument } from "@/application/reading/register-document";
@@ -129,6 +129,7 @@ export const topics = {
       ...presentationDependencies({ visitorWaiting: true }),
       allowGeneration: () => allow("newPages", ip),
     }),
+  ready: () => readyTopics(new PostgresPageRepository(sql())),
   regenerate: (slug: string) => generateTopicPage(slug, presentationDependencies({ visitorWaiting: false })),
   prefetch: (slugs: string[]) =>
     prefetchTopics(

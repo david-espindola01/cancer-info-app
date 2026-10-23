@@ -62,6 +62,12 @@ export class PostgresPageRepository implements PageRepository {
     return row!.total;
   }
 
+  async listReady(limit: number) {
+    const rows = await this.sql<{ slug: string; ui: string }[]>`
+      select slug, ui from pages where ui is not null order by topic limit ${limit}`;
+    return rows.map(({ slug, ui }) => ({ slug, ui }));
+  }
+
   async release(slug: string) {
     await this.sql`update pages set status = 'error', updated_at = now() where slug = ${slug}`;
   }

@@ -34,6 +34,14 @@ export class InMemoryPageRepository implements PageRepository {
     return [...this.pages.values()].filter((page) => page.ui !== null).length;
   }
 
+  async listReady(limit: number) {
+    return [...this.pages.values()]
+      .filter((page): page is TopicPage & { ui: string } => page.ui !== null)
+      .sort((a, b) => a.topic.localeCompare(b.topic))
+      .slice(0, limit)
+      .map(({ slug, ui }) => ({ slug, ui }));
+  }
+
   async release(slug: string) {
     const current = this.pages.get(slug);
     if (current) this.update({ ...current, status: "error" });

@@ -46,6 +46,8 @@ export interface PageRepository {
   release(slug: string): Promise<void>;
   /** How many pages are ready to be served. */
   countReady(): Promise<number>;
+  /** The pages ready to be served (slug and content), at most `limit`. */
+  listReady(limit: number): Promise<{ slug: string; ui: string }[]>;
 }
 
 /** Request limit per key (for example, per visitor) within a time window. */
