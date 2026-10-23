@@ -4,6 +4,7 @@ import type { LlmProvider } from "@/application/llm-port";
 import { generateTopicPage, getTopicPage, readyTopics } from "@/application/presentation/topic-pages";
 import { prefetchTopics } from "@/application/presentation/prefetch-topics";
 import { processNextStep } from "@/application/reading/process-next-step";
+import { removeDocument, setDocumentActive } from "@/application/reading/manage-documents";
 import { registerDocument } from "@/application/reading/register-document";
 import { createConnection } from "./db/client";
 import { PostgresAiCapacity } from "./db/postgres-ai-capacity";
@@ -76,7 +77,17 @@ export const documents = {
       memories: new PostgresMemoryRepository(sql()),
       reader: llmProvider(readerModel(), TURNS.reader),
     }),
+  setActive: (id: string, active: boolean) => setDocumentActive(id, active, libraryDependencies()),
+  remove: (id: string) => removeDocument(id, libraryDependencies()),
 };
+
+function libraryDependencies() {
+  return {
+    documents: documentRepository(),
+    memories: new PostgresMemoryRepository(sql()),
+    pages: new PostgresPageRepository(sql()),
+  };
+}
 
 /**
  * A visitor waiting for a page may also use the fallback models, in order, when the main one

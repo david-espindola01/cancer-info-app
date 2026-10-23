@@ -21,6 +21,7 @@ export class InMemoryDocumentRepository implements DocumentRepository {
       title,
       fingerprint,
       status: "pending",
+      active: true,
       error: null,
       createdAt: new Date(),
     };
@@ -55,6 +56,21 @@ export class InMemoryDocumentRepository implements DocumentRepository {
 
   async listNotes(documentId: string) {
     return this.chunksOf(documentId).flatMap((chunk) => (chunk.notes ? [chunk.notes] : []));
+  }
+
+  async setActive(id: string, active: boolean) {
+    const document = this.documents.find((d) => d.id === id);
+    if (!document) return null;
+    document.active = active;
+    return { ...document };
+  }
+
+  async remove(id: string) {
+    const index = this.documents.findIndex((d) => d.id === id);
+    if (index === -1) return false;
+    this.documents.splice(index, 1);
+    this.chunks.splice(0, this.chunks.length, ...this.chunks.filter((chunk) => chunk.documentId !== id));
+    return true;
   }
 
   async progress(documentId: string) {

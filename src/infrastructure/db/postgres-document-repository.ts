@@ -9,6 +9,7 @@ interface DocumentRow {
   fingerprint: string;
   status: DocumentStatus;
   error: string | null;
+  active: boolean;
   created_at: Date;
 }
 
@@ -18,6 +19,7 @@ const toDocument = (row: DocumentRow): SourceDocument => ({
   fingerprint: row.fingerprint,
   status: row.status,
   error: row.error,
+  active: row.active,
   createdAt: row.created_at,
 });
 
@@ -79,6 +81,18 @@ export class PostgresDocumentRepository implements DocumentRepository {
       where document_id = ${documentId} and notes is not null
       order by position`;
     return rows.map((row) => row.notes);
+  }
+
+  async setActive(id: string, active: boolean) {
+    const [row] = await this.sql<DocumentRow[]>`
+      update documents set active = ${active}, updated_at = now() where id = ${id} returning *`;
+    return row ? toDocument(row) : null;
+  }
+
+  async remove(id: string) {
+    // Its chunks and memory are deleted with it (on delete cascade).
+    const rows = await this.sql`delete from documents where id = ${id} returning id`;
+    return rows.length > 0;
   }
 
   async progress(documentId: string) {

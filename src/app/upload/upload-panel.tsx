@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { DocumentView } from "../api/http";
-import { fetchDocuments } from "./api-client";
+import { changeDocumentActive, deleteDocument, fetchDocuments } from "./api-client";
 import { DocumentList, type Activity } from "./document-list";
 import { LoginForm } from "./login-form";
 import { PdfPicker } from "./pdf-picker";
@@ -25,6 +25,7 @@ function loadState(): Promise<State> {
 export function UploadPanel() {
   const [state, setState] = useState<State>({ phase: "loading" });
   const [activity, setActivity] = useState<Activity | null>(null);
+  const [failure, setFailure] = useState<string | null>(null);
   // One document is read at a time: the AI's limit is per minute.
   const reading = useRef(false);
 
@@ -46,6 +47,15 @@ export function UploadPanel() {
   );
 
   useEffect(load, [load]);
+
+  /** Turns an article on or off, or deletes it, and shows the list as it is now. */
+  const change = useCallback(
+    async (action: () => Promise<string | null>) => {
+      setFailure(await action());
+      load();
+    },
+    [load],
+  );
 
   // Automatically reads, one by one, the documents waiting to be read.
   const next =
@@ -72,8 +82,19 @@ export function UploadPanel() {
         <>
           <PdfPicker onUpload={load} />
           <h2 className="mt-8 text-xl font-bold">Artículos</h2>
-          <DocumentList documents={state.documents} activity={activity} onRetry={read} />
-          <UsagePanel version={state.documents.map((d) => d.status).join()} />
+          {failure && (
+            <p role="alert" className="mt-4 font-semibold">
+              {failure}
+            </p>
+          )}
+          <DocumentList
+            documents={state.documents}
+            activity={activity}
+            onRetry={read}
+            onToggle={(id, active) => void change(() => changeDocumentActive(id, active))}
+            onDelete={(id) => void change(() => deleteDocument(id))}
+          />
+          <UsagePanel version={state.documents.map((d) => `${d.status}${d.active}`).join()} />
         </>
       );
   }

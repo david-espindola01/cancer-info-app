@@ -60,3 +60,19 @@ export async function sendDocument(title: string, text: string): Promise<{ ok: b
     ? { ok: true, message: "Subido. Queda en espera de lectura." }
     : { ok: false, message: await errorMessage(response) };
 }
+
+/** Turns an article on or off for the agents. Returns null if it worked, or the error message. */
+export async function changeDocumentActive(id: string, active: boolean): Promise<string | null> {
+  const response = await fetch(`/api/documents/${id}`, {
+    method: "PATCH",
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ active }),
+  });
+  return response.ok ? null : errorMessage(response);
+}
+
+/** Deletes an article with everything read from it. Returns null if it worked, or the error message. */
+export async function deleteDocument(id: string): Promise<string | null> {
+  const response = await fetch(`/api/documents/${id}`, { method: "DELETE" });
+  return response.ok ? null : errorMessage(response);
+}
