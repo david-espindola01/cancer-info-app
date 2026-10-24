@@ -60,6 +60,19 @@ export const SearchIcon = () => (
   </svg>
 );
 
+export const UploadIcon = () => (
+  <svg {...commonProps} width={28} height={28}>
+    <path d="M12 16V4M7 9l5-5 5 5" />
+    <path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
+  </svg>
+);
+
+export const TrashIcon = () => (
+  <svg {...commonProps} width={18} height={18}>
+    <path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12M9 7V4h6v3" />
+  </svg>
+);
+
 /* Shapes of «Tierra viva»: decorative, they take the color of their text (currentColor). */
 
 /** Two rolling hills, to close the bottom of a block. */

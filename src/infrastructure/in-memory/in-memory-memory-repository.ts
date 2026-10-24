@@ -24,11 +24,10 @@ export class InMemoryMemoryRepository implements MemoryRepository {
     const terms = searchTerms(query).map(withoutAccents);
     const found: { memory: FoundMemory; matches: number }[] = [];
 
-    for (const [documentId, content] of this.memories) {
+    for (const [documentId, content] of await this.inUse()) {
       const wordsOf = (text: string) => new Set(withoutAccents(text).split(/[^\p{L}\p{N}]+/u));
       const words = wordsOf(textValues(content).join(" "));
-      const document = await this.documents.get(documentId);
-      const title = document?.title ?? "";
+      const title = (await this.documents.get(documentId))!.title;
       const inTitle = wordsOf(`${title} ${content.plainTitle}`);
       // As in Postgres: counts the match in the text and, with double weight, in the title.
       const matches =
@@ -45,7 +44,7 @@ export class InMemoryMemoryRepository implements MemoryRepository {
 
   async mostCommonTopics(limit: number) {
     const counts = new Map<string, number>();
-    for (const { topics } of this.memories.values()) {
+    for (const [, { topics }] of await this.inUse()) {
       for (const topic of topics) counts.set(topic, (counts.get(topic) ?? 0) + 1);
     }
     return [...counts]
@@ -56,6 +55,20 @@ export class InMemoryMemoryRepository implements MemoryRepository {
 
   async corpusVersion() {
     return this.version;
+  }
+
+  async corpusChanged() {
+    this.version += 1;
+    return this.version;
+  }
+
+  /** Memories of documents that exist and are turned on (as the join in Postgres). */
+  private async inUse() {
+    const inUse: [string, MemoryContent][] = [];
+    for (const [documentId, content] of this.memories) {
+      if ((await this.documents.get(documentId))?.active) inUse.push([documentId, content]);
+    }
+    return inUse;
   }
 }
 

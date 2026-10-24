@@ -8,6 +8,8 @@ export interface SourceDocument {
   fingerprint: string;
   status: DocumentStatus;
   error: string | null;
+  /** Whether the agents use it. The team can turn it off without losing what was read. */
+  active: boolean;
   createdAt: Date;
 }
 

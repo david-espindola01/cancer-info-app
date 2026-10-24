@@ -19,12 +19,15 @@ export function prepareMaterial(memories: FoundMemory[]): {
   text: string;
   sources: PageSource[];
   topics: string[];
+  /** The documents behind the sources, in the same order. */
+  documentIds: string[];
 } {
   const blocks: string[] = [];
   const sources: PageSource[] = [];
   const topics = new Set<string>();
+  const documentIds: string[] = [];
 
-  for (const { content, title } of memories) {
+  for (const { content, title, documentId } of memories) {
     const number = sources.length + 1;
     const block = describeMemory(number, content);
     if (blocks.length > 0 && [...blocks, block].join("\n\n").length > MAX_MATERIAL_CHARACTERS) break;
@@ -32,8 +35,9 @@ export function prepareMaterial(memories: FoundMemory[]): {
     blocks.push(block.slice(0, MAX_MATERIAL_CHARACTERS));
     sources.push({ number, title: content.plainTitle, reference: readableReference(content.reference, title) });
     content.topics.forEach((topic) => topics.add(topic));
+    documentIds.push(documentId);
   }
-  return { text: blocks.join("\n\n"), sources, topics: [...topics] };
+  return { text: blocks.join("\n\n"), sources, topics: [...topics], documentIds };
 }
 
 /** «Authors (year). Journal» without the data the Reader did not find; if none, the document title. */

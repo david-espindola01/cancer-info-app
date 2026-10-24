@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { memorySchema } from "@/application/reading/schemas";
 import { emptyTables, testConnection } from "@/testing/database";
+import { DELETE as removeDocument, PATCH as setActive } from "./documents/[id]/route";
 import { POST as processStep } from "./documents/[id]/step/route";
 import { GET as listDocuments, POST as uploadDocument } from "./documents/route";
 import { DELETE as logout, POST as login } from "./session/route";
@@ -109,6 +110,7 @@ describe("/api/documents", () => {
       title: "Estudio.pdf",
       status: "pending",
       error: null,
+      active: true,
       createdAt: expect.any(String),
     });
 
@@ -170,5 +172,60 @@ describe("/api/documents", () => {
 
     expect(response.status).toBe(status);
     expect(await response.json()).toEqual({ error: expect.any(String) });
+  });
+});
+
+describe("/api/documents/[id]", () => {
+  async function uploaded(cookie: string) {
+    const upload = await uploadDocument(
+      request("/api/documents", { method: "POST", body: { title: "Estudio", text: articleText }, cookie }),
+    );
+    return (await upload.json()).document.id as string;
+  }
+  const params = (id: string) => ({ params: Promise.resolve({ id }) });
+
+  it("turns an article off and on, and lists it that way", async () => {
+    const cookie = await sessionCookie();
+    const id = await uploaded(cookie);
+
+    const off = await setActive(request(`/api/documents/${id}`, { method: "PATCH", body: { active: false }, cookie }), params(id));
+
+    expect(off.status).toBe(200);
+    expect((await off.json()).document).toMatchObject({ id, active: false });
+    const list = await (await listDocuments(request("/api/documents", { cookie }))).json();
+    expect(list.documents[0]).toMatchObject({ id, active: false });
+  });
+
+  it("deletes an article", async () => {
+    const cookie = await sessionCookie();
+    const id = await uploaded(cookie);
+
+    const response = await removeDocument(request(`/api/documents/${id}`, { method: "DELETE", cookie }), params(id));
+
+    expect(response.status).toBe(204);
+    expect((await (await listDocuments(request("/api/documents", { cookie }))).json()).documents).toEqual([]);
+  });
+
+  it("requires a session to change or delete an article", async () => {
+    const id = "00000000-0000-0000-0000-000000000000";
+
+    expect((await setActive(request(`/api/documents/${id}`, { method: "PATCH", body: { active: false } }), params(id))).status).toBe(401);
+    expect((await removeDocument(request(`/api/documents/${id}`, { method: "DELETE" }), params(id))).status).toBe(401);
+  });
+
+  it.each(["not-a-uuid", "00000000-0000-0000-0000-000000000000"])("answers 404 for the missing article %s", async (id) => {
+    const cookie = await sessionCookie();
+
+    expect((await setActive(request(`/api/documents/${id}`, { method: "PATCH", body: { active: true }, cookie }), params(id))).status).toBe(404);
+    expect((await removeDocument(request(`/api/documents/${id}`, { method: "DELETE", cookie }), params(id))).status).toBe(404);
+  });
+
+  it("rejects a change that does not say whether the article stays on", async () => {
+    const cookie = await sessionCookie();
+    const id = await uploaded(cookie);
+
+    const response = await setActive(request(`/api/documents/${id}`, { method: "PATCH", body: { active: "yes" }, cookie }), params(id));
+
+    expect(response.status).toBe(400);
   });
 });

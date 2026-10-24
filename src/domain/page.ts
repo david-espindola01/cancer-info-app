@@ -16,6 +16,11 @@ export interface TopicPage {
   /** The Presenter Agent's JSON answer (`{ "ui": [...] }`); null if it was never generated. */
   ui: string | null;
   sources: PageSource[];
+  /**
+   * Documents the page was built from: if one is turned off or deleted, the page is
+   * forgotten. Null for pages built before this was recorded.
+   */
+  documentIds: string[] | null;
   /** Topics the page leads to, from most to least recommended (to prefetch them). */
   keywords: string[];
   /** Knowledge version it was generated with: if it changes, the page is regenerated. */

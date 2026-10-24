@@ -32,7 +32,7 @@ async function setUp(respond: ConstructorParameters<typeof FakeProvider>[0] = ()
 
 describe("getTopicPage", () => {
   it("generates the page with the found sources, reviews it and stores it", async () => {
-    const { deps, presenter } = await setUp();
+    const { deps, presenter, documentId } = await setUp();
 
     const result = await getTopicPage("Tumor", deps);
 
@@ -40,6 +40,7 @@ describe("getTopicPage", () => {
     const page = result.kind === "ready" ? result.page : null;
     expect(page).toMatchObject({
       slug: "tumor",
+      documentIds: [documentId],
       topic: "tumor",
       status: "ready",
       corpusVersion: 1,
@@ -195,7 +196,7 @@ describe("readyTopics", () => {
     const repo = new InMemoryPageRepository();
     for (const page of pages) {
       await repo.reserve(page.slug, page.slug);
-      await repo.save({ slug: page.slug, topic: page.slug, ui: JSON.stringify({ ui: page.ui }), sources: [], keywords: [], corpusVersion: 1 });
+      await repo.save({ slug: page.slug, topic: page.slug, ui: JSON.stringify({ ui: page.ui }), sources: [], documentIds: [], keywords: [], corpusVersion: 1 });
     }
     return repo;
   }

@@ -112,7 +112,7 @@ export async function generateTopicPage(slug: string, deps: PresentationDependen
 async function noInformation(slug: string, topic: string, memories: MemoryRepository) {
   const topics = await memories.mostCommonTopics(SUGGESTED_TOPICS);
   const { page, keywords } = reviewPage(noInformationPage(topic), { sources: [], topics }, slug);
-  return { ui: JSON.stringify(page), sources: [], keywords };
+  return { ui: JSON.stringify(page), sources: [], documentIds: [], keywords };
 }
 
 async function present(slug: string, topic: string, found: FoundMemory[], presenter: LlmProvider) {
@@ -126,7 +126,7 @@ async function present(slug: string, topic: string, found: FoundMemory[], presen
       maxOutputTokens: PRESENTER_MAX_TOKENS,
     });
     const { page, keywords } = reviewPage(answer, material, slug);
-    return { ui: JSON.stringify(page), sources: material.sources, keywords };
+    return { ui: JSON.stringify(page), sources: material.sources, documentIds: material.documentIds, keywords };
   });
 }
 

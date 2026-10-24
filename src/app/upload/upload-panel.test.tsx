@@ -12,6 +12,7 @@ const document: DocumentView = {
   title: "Estudio sobre piel",
   status: "ready",
   error: null,
+  active: true,
   createdAt: "2026-10-21T00:00:00.000Z",
 };
 
@@ -129,5 +130,68 @@ describe("UploadPanel", () => {
     render(<UploadPanel />);
 
     expect(await screen.findByRole("alert")).toHaveTextContent("El servidor respondió con un error (500).");
+  });
+
+  it("turns an article off and on with its switch", async () => {
+    responses = [
+      json({ documents: [document] }),
+      json({ document: { ...document, active: false } }),
+      json({ documents: [{ ...document, active: false }] }),
+    ];
+    render(<UploadPanel />);
+
+    fireEvent.click(await screen.findByRole("switch", { name: "Usar «Estudio sobre piel» en la página" }));
+
+    expect(await screen.findByText("Apagado: el agente no lo usa en la página.")).toBeInTheDocument();
+    expect(screen.getByRole("switch")).toHaveAttribute("aria-checked", "false");
+    expect(fakeFetch).toHaveBeenCalledWith(
+      "/api/documents/1",
+      expect.objectContaining({ method: "PATCH", body: JSON.stringify({ active: false }) }),
+    );
+  });
+
+  it("asks for confirmation before deleting an article, and lets the person cancel", async () => {
+    responses = [json({ documents: [document] }), new Response(null, { status: 204 }), json({ documents: [] })];
+    render(<UploadPanel />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Eliminar" }));
+    expect(screen.getByRole("alertdialog")).toHaveTextContent("¿Eliminar «Estudio sobre piel»?");
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(fakeFetch).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Eliminar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sí, eliminar" }));
+
+    expect(await screen.findByText("Todavía no hay artículos subidos.")).toBeInTheDocument();
+    expect(fakeFetch).toHaveBeenCalledWith("/api/documents/1", { method: "DELETE" });
+  });
+
+  it("shows the server's message when a change fails", async () => {
+    responses = [json({ documents: [document] }), json({ error: "No existe ese documento." }, 404), json({ documents: [] })];
+    render(<UploadPanel />);
+
+    fireEvent.click(await screen.findByRole("switch"));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("No existe ese documento.");
+  });
+
+  it("uploads the PDFs dropped on the button and ignores other files", async () => {
+    vi.mocked(extractPdfText).mockResolvedValueOnce("texto");
+    responses = [json({ documents: [] }), json({ document }, 201), json({ documents: [document] })];
+    render(<UploadPanel />);
+    await screen.findByText("Todavía no hay artículos subidos.");
+
+    const pdf = new File(["%PDF"], "Arrastrado.pdf", { type: "application/pdf" });
+    const image = new File(["x"], "foto.png", { type: "image/png" });
+    fireEvent.drop(screen.getByText("o arrástralos aquí. Puedes elegir varios a la vez."), {
+      dataTransfer: { files: [pdf, image] },
+    });
+
+    expect(await screen.findByText("Subido. Queda en espera de lectura.")).toBeInTheDocument();
+    const extracted = vi.mocked(extractPdfText).mock.calls.map(([file]) => file.name);
+    expect(extracted).toContain(pdf.name);
+    expect(extracted).not.toContain(image.name);
+    expect(screen.queryByText(/foto\.png/)).not.toBeInTheDocument();
   });
 });
