@@ -6,7 +6,7 @@ import { useOffline } from "next/offline";
 export function OfflineNotice() {
   if (!useOffline()) return null;
   return (
-    <p role="status" className="color-amber rounded-xl border-l-8 border-(--c) bg-(--cf) p-3 font-semibold">
+    <p role="status" className="color-maiz bubble-start border-[3px] border-(--c) bg-(--cf) p-3 font-bold">
       Sin señal. Puedes seguir leyendo lo que ya cargó; lo nuevo aparecerá cuando vuelva la conexión.
     </p>
   );

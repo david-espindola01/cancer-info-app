@@ -33,9 +33,10 @@ function renderNodes(nodes: unknown, sources: PageSource[], path = "n"): ReactNo
 /**
  * Renders on the server a page built by the Presenter Agent: `ui` is its JSON answer
  * (`{ "ui": [...] }`), checked against the catalog before it is shown. The phone receives
- * plain HTML: neither Hashbrown nor the catalog travel to the browser.
+ * plain HTML: neither Hashbrown nor the catalog travel to the browser. `actions` (listen,
+ * save) are shown under the page's title.
  */
-export function GeneratedPage({ ui, sources }: { ui: string; sources: PageSource[] }) {
+export function GeneratedPage({ ui, sources, actions }: { ui: string; sources: PageSource[]; actions?: ReactNode }) {
   const blocks = renderNodes(pageNodes(ui), sources);
 
   if (blocks.length === 0) {
@@ -44,6 +45,11 @@ export function GeneratedPage({ ui, sources }: { ui: string; sources: PageSource
         No se pudo mostrar esta página. Intenta de nuevo en unos minutos.
       </p>
     );
+  }
+  if (actions) {
+    // The page's buttons go right under its title, so the title is the first thing seen.
+    const heading = pageNodes(ui).findIndex((node) => node !== null && typeof node === "object" && "Heading" in node);
+    blocks.splice(heading === 0 ? 1 : 0, 0, <div key="actions" data-skip-reading className="flex flex-wrap items-center gap-2">{actions}</div>);
   }
   return <article className="blocks flex flex-col gap-6">{blocks}</article>;
 }

@@ -60,7 +60,7 @@ describe("MyTopics", () => {
 
     const { unmount } = render(<MyTopics ready={[]} />);
     expect(screen.getByRole("region", { name: "Guardados para leer sin señal" })).toHaveTextContent(
-      "toca «Guardar para leer sin señal»",
+      "toca «Guardar sin señal»",
     );
     unmount();
 

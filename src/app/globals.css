@@ -1,55 +1,63 @@
 @import "tailwindcss";
 
 /*
- * Easy-reading palette. Each color has its strong version (text, icons, borders) and its
- * soft background; every combination passes WCAG AA contrast (≥ 4.5:1) in light and dark
- * mode (checked when designing it: the minimum is 5.3:1).
+ * «Tierra viva»: colors of the countryside (maize, clay, hills, sky, river) on a warm
+ * background. Each color has its strong version (text, icons, borders, solid blocks) and
+ * its soft background. Every combination passes WCAG AA (≥ 4.5:1) in light and dark mode,
+ * including light text on the strong color (checked when designing it: the minimum is 5.3:1).
  */
 :root {
-  --background: #fbfaf7;
-  --foreground: #1a1a1a;
-  --muted: #4a4a4a;
-  --surface: #ffffff;
-  --border: #dcd8cf;
+  --background: #fff6e9;
+  --foreground: #2b1d12;
+  --muted: #6b4a2f;
+  --surface: #fffdf8;
+  --border: #e8d5bb;
 
-  --teal: #0f6b63;
-  --teal-soft: #e2f3f0;
-  --coral: #b03a12;
-  --coral-soft: #fdece5;
-  --violet: #6b2fb3;
-  --violet-soft: #f2eafc;
-  --blue: #1d4fd8;
-  --blue-soft: #e8effe;
-  --amber: #8a5300;
-  --amber-soft: #fdf1d8;
-  --green: #2a6e2e;
-  --green-soft: #e6f4e7;
-  --pink: #a01d4e;
-  --pink-soft: #fce9f0;
+  --barro: #a3361b;
+  --barro-soft: #fbe3d6;
+  --maiz: #8a5300;
+  --maiz-soft: #fcebc4;
+  --monte: #2f6b3a;
+  --monte-soft: #e1efd9;
+  --cielo: #1f5f8b;
+  --cielo-soft: #e0eef7;
+  --cafe: #6b4226;
+  --cafe-soft: #f3e4d4;
+  --flor: #a1245f;
+  --flor-soft: #fbe1ec;
+  --rio: #0f6b63;
+  --rio-soft: #dcf1ec;
+
+  /* The sun of the titles: the same in both modes, always with dark text (7.5:1). */
+  --sol: #e8a33d;
+  --sol-text: #2b1d12;
+  --colina: #2f6b3a;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #121212;
-    --foreground: #f2f2f2;
-    --muted: #c4c4c4;
-    --surface: #1c1c1c;
-    --border: #3a3a3a;
+    --background: #1b130d;
+    --foreground: #fbefe0;
+    --muted: #d6c2ab;
+    --surface: #261b13;
+    --border: #4a3626;
 
-    --teal: #6ee0d0;
-    --teal-soft: #123430;
-    --coral: #ff9b78;
-    --coral-soft: #3a1d13;
-    --violet: #c9a6ff;
-    --violet-soft: #2a1b40;
-    --blue: #9db8ff;
-    --blue-soft: #16213d;
-    --amber: #ffc566;
-    --amber-soft: #33240c;
-    --green: #8fdc94;
-    --green-soft: #14301a;
-    --pink: #ff94bb;
-    --pink-soft: #3a1424;
+    --barro: #ff9c7a;
+    --barro-soft: #3d1d12;
+    --maiz: #f5c46a;
+    --maiz-soft: #3a2a0c;
+    --monte: #9bd49f;
+    --monte-soft: #16301b;
+    --cielo: #8cc4ef;
+    --cielo-soft: #11283a;
+    --cafe: #e3b48e;
+    --cafe-soft: #33231a;
+    --flor: #ff9cc6;
+    --flor-soft: #3d1527;
+    --rio: #6ee0d0;
+    --rio-soft: #123430;
+
+    --colina: #24502c;
   }
 }
 
@@ -59,7 +67,9 @@
   --color-muted: var(--muted);
   --color-surface: var(--surface);
   --color-border: var(--border);
-  --color-accent: var(--teal);
+  --color-accent: var(--barro);
+  --color-sol: var(--sol);
+  --color-sol-text: var(--sol-text);
   /* System fonts: no typeface is downloaded (slow connections). */
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
@@ -74,39 +84,54 @@ body {
 
 /*
  * Colors per component: each one sets --c (strong) and --cf (soft background), which the
- * components use as `text-(--c)` and `bg-(--cf)`.
+ * components use as `text-(--c)`, `bg-(--c)` and `bg-(--cf)`.
  */
-.color-teal { --c: var(--teal); --cf: var(--teal-soft); }
-.color-coral { --c: var(--coral); --cf: var(--coral-soft); }
-.color-violet { --c: var(--violet); --cf: var(--violet-soft); }
-.color-blue { --c: var(--blue); --cf: var(--blue-soft); }
-.color-amber { --c: var(--amber); --cf: var(--amber-soft); }
-.color-green { --c: var(--green); --cf: var(--green-soft); }
-.color-pink { --c: var(--pink); --cf: var(--pink-soft); }
+.color-barro { --c: var(--barro); --cf: var(--barro-soft); }
+.color-maiz { --c: var(--maiz); --cf: var(--maiz-soft); }
+.color-monte { --c: var(--monte); --cf: var(--monte-soft); }
+.color-cielo { --c: var(--cielo); --cf: var(--cielo-soft); }
+.color-cafe { --c: var(--cafe); --cf: var(--cafe-soft); }
+.color-flor { --c: var(--flor); --cf: var(--flor-soft); }
+.color-rio { --c: var(--rio); --cf: var(--rio-soft); }
 
 /* Card lists and sections: each item takes the next palette color. */
 .color-cycle > :nth-child(7n + 1),
-.blocks > section:nth-of-type(7n + 1) { --c: var(--teal); --cf: var(--teal-soft); }
+.blocks > section:nth-of-type(7n + 1) { --c: var(--monte); --cf: var(--monte-soft); }
 .color-cycle > :nth-child(7n + 2),
-.blocks > section:nth-of-type(7n + 2) { --c: var(--coral); --cf: var(--coral-soft); }
+.blocks > section:nth-of-type(7n + 2) { --c: var(--barro); --cf: var(--barro-soft); }
 .color-cycle > :nth-child(7n + 3),
-.blocks > section:nth-of-type(7n + 3) { --c: var(--violet); --cf: var(--violet-soft); }
+.blocks > section:nth-of-type(7n + 3) { --c: var(--cielo); --cf: var(--cielo-soft); }
 .color-cycle > :nth-child(7n + 4),
-.blocks > section:nth-of-type(7n + 4) { --c: var(--blue); --cf: var(--blue-soft); }
+.blocks > section:nth-of-type(7n + 4) { --c: var(--maiz); --cf: var(--maiz-soft); }
 .color-cycle > :nth-child(7n + 5),
-.blocks > section:nth-of-type(7n + 5) { --c: var(--amber); --cf: var(--amber-soft); }
+.blocks > section:nth-of-type(7n + 5) { --c: var(--flor); --cf: var(--flor-soft); }
 .color-cycle > :nth-child(7n + 6),
-.blocks > section:nth-of-type(7n + 6) { --c: var(--green); --cf: var(--green-soft); }
+.blocks > section:nth-of-type(7n + 6) { --c: var(--rio); --cf: var(--rio-soft); }
 .color-cycle > :nth-child(7n + 7),
-.blocks > section:nth-of-type(7n + 7) { --c: var(--pink); --cf: var(--pink-soft); }
+.blocks > section:nth-of-type(7n + 7) { --c: var(--cafe); --cf: var(--cafe-soft); }
 
-/* A keyword people can pick: thick underline and a comfortable touch area. */
+/* ---------- Shapes of «Tierra viva» ---------- */
+
+/* A leaf (section titles, bullets). */
+.leaf { border-radius: 0 100% 0 100%; }
+/* Speech bubbles: the tail points to the side the corner is square. */
+.bubble { border-radius: 1.5rem 1.5rem 1.5rem 0.3rem; }
+.bubble-start { border-radius: 0.3rem 1.5rem 1.5rem 1.5rem; }
+/* A stone or a seed: irregular, never a perfect circle. */
+.seed { border-radius: 58% 42% 55% 45% / 48% 58% 42% 52%; }
+
+/* A solid block (strong color, light text): keywords take its text color. */
+.solid { background: var(--c); color: var(--background); }
+.solid .topic-link { color: inherit; text-decoration-color: currentColor; }
+.solid .topic-link:hover { background: rgb(255 255 255 / 0.15); }
+
+/* A keyword people can pick: a wavy underline, like a furrow, and a comfortable touch area. */
 .topic-link {
-  color: var(--teal);
-  font-weight: 600;
-  text-decoration: underline;
-  text-decoration-thickness: 3px;
-  text-underline-offset: 4px;
+  color: var(--barro);
+  font-weight: 700;
+  text-decoration: underline wavy;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 5px;
   border-radius: 6px;
   padding: 0.1em 0.2em;
   margin: 0 -0.2em;
@@ -114,11 +139,27 @@ body {
 }
 
 .topic-link:hover {
-  background: var(--teal-soft);
+  background: var(--barro-soft);
 }
 
+/* Rounded buttons with a border, for secondary actions (listen, save). */
+.pill-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 2px solid var(--barro);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--barro);
+  padding: 0.35rem 0.95rem;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.pill-button:hover { background: var(--barro-soft); }
+.pill-button:disabled { opacity: 0.7; }
+
 :focus-visible {
-  outline: 3px solid var(--teal);
+  outline: 3px solid var(--barro);
   outline-offset: 2px;
 }
 

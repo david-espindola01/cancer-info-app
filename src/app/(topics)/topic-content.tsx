@@ -50,11 +50,16 @@ export async function TopicContent({ slug }: { slug: string }) {
       return (
         <>
           <RouteTrail topic={topic} start={page.slug === STARTING_TOPIC} />
-          <div className="flex flex-wrap items-start gap-3">
-            <ListenButton />
-            <SaveOfflineButton topic={topic} />
-          </div>
-          <GeneratedPage ui={page.ui} sources={page.sources} />
+          <GeneratedPage
+            ui={page.ui}
+            sources={page.sources}
+            actions={
+              <>
+                <ListenButton />
+                <SaveOfflineButton topic={topic} />
+              </>
+            }
+          />
         </>
       );
     }

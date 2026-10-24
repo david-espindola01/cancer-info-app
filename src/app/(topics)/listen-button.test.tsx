@@ -39,13 +39,13 @@ describe("ListenButton", () => {
       </main>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "▶ Escuchar esta página" }));
+    fireEvent.click(screen.getByRole("button", { name: "▶ Escuchar" }));
 
     const utterance = voice.speak.mock.calls[0]![0] as FakeUtterance;
     expect(utterance).toMatchObject({ lang: "es", text: "TítuloUn párrafo." });
-    expect(screen.getByRole("button", { pressed: true })).toHaveTextContent("Detener lectura");
+    expect(screen.getByRole("button", { pressed: true })).toHaveTextContent("Detener");
 
-    fireEvent.click(screen.getByRole("button", { name: "■ Detener lectura" }));
+    fireEvent.click(screen.getByRole("button", { name: "■ Detener" }));
     expect(voice.cancel).toHaveBeenCalled();
     expect(screen.getByRole("button", { pressed: false })).toBeInTheDocument();
   });
@@ -89,7 +89,29 @@ describe("ListenButton", () => {
     const utterance = voice.speak.mock.calls[0]![0] as FakeUtterance;
     act(() => utterance.onend?.());
 
-    expect(screen.getByRole("button", { pressed: false })).toHaveTextContent("Escuchar esta página");
+    expect(screen.getByRole("button", { pressed: false })).toHaveTextContent("Escuchar");
+  });
+
+  it("does not read the page's own buttons", () => {
+    withVoice();
+    render(
+      <main>
+        <article>
+          <h1>Título</h1>
+          <div data-skip-reading>
+            <ListenButton />
+          </div>
+          <p>Un párrafo.</p>
+        </article>
+      </main>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "▶ Escuchar" }));
+
+    const read = (voice.speak.mock.calls[0]![0] as FakeUtterance).text;
+    expect(read).toContain("Título");
+    expect(read).toContain("Un párrafo.");
+    expect(read).not.toContain("Escuchar");
   });
 
   it("does nothing if there is no article to read", () => {

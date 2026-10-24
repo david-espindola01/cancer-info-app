@@ -72,3 +72,21 @@ export const TrashIcon = () => (
     <path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-12M9 7V4h6v3" />
   </svg>
 );
+
+/* Shapes of «Tierra viva»: decorative, they take the color of their text (currentColor). */
+
+/** Two rolling hills, to close the bottom of a block. */
+export const Hills = ({ className = "" }: { className?: string }) => (
+  <svg aria-hidden viewBox="0 0 400 60" preserveAspectRatio="none" className={className}>
+    <path d="M0 38 Q70 6 150 30 T300 26 T400 20 V60 H0Z" fill="currentColor" opacity="0.55" />
+    <path d="M0 48 Q90 22 190 44 T400 36 V60 H0Z" fill="currentColor" />
+  </svg>
+);
+
+/** The site's mark: a sun rising behind a hill. */
+export const SunMark = () => (
+  <svg aria-hidden viewBox="0 0 32 32" width={28} height={28} className="shrink-0">
+    <circle cx="19" cy="14" r="8" fill="var(--sol)" />
+    <path d="M1 28 Q10 14 20 22 T31 20 V31 H1Z" fill="var(--monte)" />
+  </svg>
+);

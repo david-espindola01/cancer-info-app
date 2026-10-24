@@ -74,7 +74,7 @@ export function DocumentList({ documents, activity, onRetry, onToggle, onDelete 
                   type="button"
                   disabled={reading}
                   onClick={() => setConfirming(document.id)}
-                  className="color-coral flex items-center gap-1 rounded-xl px-2 py-1 font-semibold text-(--c) hover:bg-(--cf) disabled:opacity-60"
+                  className="color-barro flex items-center gap-1 rounded-xl px-2 py-1 font-semibold text-(--c) hover:bg-(--cf) disabled:opacity-60"
                 >
                   <TrashIcon />
                   Eliminar
@@ -92,7 +92,7 @@ export function DocumentList({ documents, activity, onRetry, onToggle, onDelete 
               </button>
             )}
             {confirming === document.id && (
-              <div role="alertdialog" aria-label="Confirmar eliminación" className="color-coral mt-3 rounded-xl bg-(--cf) p-3">
+              <div role="alertdialog" aria-label="Confirmar eliminación" className="color-barro mt-3 rounded-xl bg-(--cf) p-3">
                 <p>
                   ¿Eliminar «{document.title}»? Se borra lo que el agente aprendió de este artículo y las páginas que lo
                   usaban se vuelven a preparar sin él. Si solo quieres dejar de usarlo por un tiempo, mejor apágalo.

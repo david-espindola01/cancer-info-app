@@ -56,8 +56,8 @@ async function offlinePage() {
   );
   const list = items.length
     ? `<p>Estos temas sí están guardados en tu teléfono:</p><ul>${items.join("")}</ul>`
-    : "<p>Cuando tengas señal, abre un tema y toca «Guardar para leer sin señal» para tenerlo siempre a mano.</p>";
-  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sin señal</title><style>body{font:1.125rem/1.65 system-ui,sans-serif;max-width:40rem;margin:0 auto;padding:1.5rem 1rem;background:#fbfaf7;color:#1a1a1a}a{color:#0f6b63;font-weight:600}li{margin:.5rem 0}@media(prefers-color-scheme:dark){body{background:#121212;color:#f2f2f2}a{color:#6ee0d0}}</style></head><body><h1>Sin señal</h1><p>Esta página no está guardada en tu teléfono. Se cargará apenas vuelva la conexión.</p>${list}</body></html>`;
+    : "<p>Cuando tengas señal, abre un tema y toca «Guardar sin señal» para tenerlo siempre a mano.</p>";
+  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sin señal</title><style>body{font:1.125rem/1.65 system-ui,sans-serif;max-width:40rem;margin:0 auto;padding:1.5rem 1rem;background:#fff6e9;color:#2b1d12}h1{background:#e8a33d;color:#2b1d12;border-radius:2rem 2rem 2rem .4rem;padding:1.25rem}a{color:#a3361b;font-weight:700;text-decoration:underline wavy;text-underline-offset:5px}li{margin:.5rem 0}@media(prefers-color-scheme:dark){body{background:#1b130d;color:#fbefe0}a{color:#ff9c7a}}</style></head><body><h1>Sin señal</h1><p>Esta página no está guardada en tu teléfono. Se cargará apenas vuelva la conexión.</p>${list}</body></html>`;
   return new Response(html, { status: 503, headers: { "Content-Type": "text/html; charset=utf-8" } });
 }
 
