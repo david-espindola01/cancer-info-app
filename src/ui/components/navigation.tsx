@@ -27,34 +27,49 @@ export function Sources({ numbers, available }: { numbers: number[]; available: 
 }
 
 /**
- * Colored cards to the recommended topics; when tapped, the page slides forward. The first
- * one is the suggested next step: wider and outlined, so there is always one clear way on.
+ * Cards to the recommended topics; when tapped, the page slides forward. The first one is
+ * the suggested next step: a solid clay block with a sun-colored label, so there is always
+ * one clear way on.
  */
 export function NextTopics({ topics }: { topics: { label: string; reason: string }[] }) {
   return (
     <nav aria-label="Sigue aprendiendo" className="flex flex-col gap-3">
-      <h2 className="text-2xl font-bold">Sigue aprendiendo</h2>
+      <h2 className="text-2xl font-extrabold">Sigue aprendiendo</h2>
       <ul className="color-cycle grid gap-3 sm:grid-cols-2">
-        {topics.map((topic, i) => (
-          <li key={topic.label} className={i === 0 ? "sm:col-span-2" : undefined}>
-            <Link
-              href={`/topic/${normalizeSlug(topic.label)}`}
-              transitionTypes={["forward"]}
-              className={`liftable flex h-full items-center gap-3 rounded-2xl border-2 bg-(--cf) p-4 hover:border-(--c) ${
-                i === 0 ? "border-(--c)" : "border-transparent"
-              }`}
-            >
-              <span className="flex-1">
-                {i === 0 && <span className="block text-sm font-bold uppercase tracking-wide">Te recomendamos</span>}
-                <span className="block font-bold text-(--c) first-letter:uppercase">{withoutMarks(topic.label)}</span>
-                <span className="block text-base">{withoutMarks(topic.reason)}</span>
-              </span>
-              <span aria-hidden className={`${styles.circle} size-9`}>
-                <ArrowIcon />
-              </span>
-            </Link>
-          </li>
-        ))}
+        {topics.map((topic, i) => {
+          const first = i === 0;
+          return (
+            <li key={topic.label} className={first ? "sm:col-span-2" : undefined}>
+              <Link
+                href={`/topic/${normalizeSlug(topic.label)}`}
+                transitionTypes={["forward"]}
+                className={`liftable flex h-full items-center gap-3 p-4 ${
+                  first ? "color-barro solid rounded-[2rem] rounded-bl-md" : "bubble bg-(--cf)"
+                }`}
+              >
+                <span className="flex-1">
+                  {first && (
+                    <span className="mb-1 inline-block rounded-full bg-sol px-3 py-0.5 text-sm font-extrabold uppercase tracking-wide text-sol-text">
+                      Te recomendamos
+                    </span>
+                  )}
+                  <span className={`block text-lg font-extrabold first-letter:uppercase ${first ? "" : "text-(--c)"}`}>
+                    {withoutMarks(topic.label)}
+                  </span>
+                  <span className="block text-base">{withoutMarks(topic.reason)}</span>
+                </span>
+                <span
+                  aria-hidden
+                  className={`seed flex size-10 shrink-0 items-center justify-center ${
+                    first ? "bg-sol text-sol-text" : "bg-(--c) text-background"
+                  }`}
+                >
+                  <ArrowIcon />
+                </span>
+              </Link>
+            </li>
+          );
+        })}
       </ul>
     </nav>
   );
@@ -62,8 +77,8 @@ export function NextTopics({ topics }: { topics: { label: string; reason: string
 
 export function NoInformation({ message }: { message: string }) {
   return (
-    <div className="color-amber flex flex-col gap-3 rounded-3xl bg-(--cf) p-5">
-      <span aria-hidden className={`${styles.circle} size-12`}>
+    <div className="color-maiz bubble flex flex-col gap-3 bg-(--cf) p-5">
+      <span aria-hidden className={`${styles.circle} seed size-14`}>
         <SearchIcon />
       </span>
       <p>{withoutMarks(message)}</p>

@@ -3,9 +3,10 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import type { TopicSummary } from "@/domain/page";
 import { topics } from "@/infrastructure/container";
+import { SITE_NAME } from "../../site";
 import { MyTopics } from "./my-topics";
 
-export const metadata: Metadata = { title: "Mis temas · Información sobre el cáncer" };
+export const metadata: Metadata = { title: `Mis temas · ${SITE_NAME}` };
 
 /** The topics ready on the server; if they cannot be read, the page shows only what is on the phone. */
 async function ReadyTopics() {

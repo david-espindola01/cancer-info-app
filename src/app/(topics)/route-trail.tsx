@@ -4,8 +4,11 @@ import Link from "next/link";
 import { useEffect, useSyncExternalStore } from "react";
 import { getNothing, getTrail, recordVisit, subscribe, type ReadTopic } from "./reading-history";
 
+/** Each step is a small rounded stone; the current one is solid. */
+const CHIP = "inline-block rounded-full bg-(--cf) px-3 py-0.5 font-bold text-(--c) hover:underline";
+
 const CHEVRON = (
-  <span aria-hidden className="text-muted">
+  <span aria-hidden className="font-extrabold text-accent">
     ›
   </span>
 );
@@ -29,10 +32,10 @@ export function RouteTrail({ topic, start }: { topic: ReadTopic; start: boolean 
   const before = at >= 0 ? trail.slice(0, at) : trail;
 
   return (
-    <nav aria-label="Tu recorrido" className="text-base">
+    <nav aria-label="Tu recorrido" className="color-barro text-base">
       <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
         <li className="flex items-center gap-2">
-          <Link href="/" transitionTypes={["back"]} className="topic-link">
+          <Link href="/" transitionTypes={["back"]} className={CHIP}>
             Inicio
           </Link>
         </li>
@@ -42,7 +45,7 @@ export function RouteTrail({ topic, start }: { topic: ReadTopic; start: boolean 
             <Link
               href={`/topic/${step.slug}`}
               transitionTypes={["back"]}
-              className="topic-link inline-block max-w-[12rem] truncate align-bottom"
+              className={`${CHIP} max-w-[12rem] truncate`}
             >
               {step.title}
             </Link>
@@ -50,7 +53,7 @@ export function RouteTrail({ topic, start }: { topic: ReadTopic; start: boolean 
         ))}
         <li className="flex min-w-0 items-center gap-2">
           {CHEVRON}
-          <span aria-current="page" className="inline-block max-w-[14rem] truncate align-bottom font-semibold">
+          <span aria-current="page" className="solid inline-block max-w-[14rem] truncate rounded-full px-3 py-0.5 font-extrabold">
             {topic.title}
           </span>
         </li>

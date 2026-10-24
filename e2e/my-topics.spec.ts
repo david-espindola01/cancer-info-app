@@ -31,8 +31,8 @@ test("a saved page can be read without signal", async ({ page, context }) => {
   await page.reload();
   await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
 
-  await page.getByRole("button", { name: "⤓ Guardar para leer sin señal" }).click();
-  await expect(page.getByText("✓ Guardada para leer sin señal")).toBeVisible();
+  await page.getByRole("button", { name: "⤓ Guardar sin señal" }).click();
+  await expect(page.getByText("✓ Guardada sin señal")).toBeVisible();
 
   await context.setOffline(true);
   await page.goto(FIRST);

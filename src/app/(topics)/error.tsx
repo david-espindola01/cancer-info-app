@@ -9,7 +9,7 @@ export default function TopicError({ reset }: { error: Error; reset: () => void 
       <button
         type="button"
         onClick={reset}
-        className="self-start rounded-lg bg-accent px-4 py-2 font-semibold text-background"
+        className="color-barro solid self-start rounded-full px-5 py-2 font-extrabold"
       >
         Reintentar
       </button>

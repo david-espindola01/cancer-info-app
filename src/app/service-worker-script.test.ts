@@ -132,7 +132,7 @@ describe("service worker (public/sw.js)", () => {
   it("without signal and nothing saved, says how to save topics", async () => {
     const worker = startWorker(noSignal);
 
-    expect(await (await worker.open("/topic/otro").response)!.text()).toContain("Guardar para leer sin señal");
+    expect(await (await worker.open("/topic/otro").response)!.text()).toContain("Guardar sin señal");
   });
 
   it("when tapping a link without signal to a kept page, makes Next.js open it as a normal page", async () => {

@@ -46,9 +46,9 @@ describe("SaveOfflineButton", () => {
     );
     render(<SaveOfflineButton topic={topic} />);
 
-    await act(async () => fireEvent.click(screen.getByRole("button", { name: "⤓ Guardar para leer sin señal" })));
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "⤓ Guardar sin señal" })));
 
-    expect(screen.getByRole("status")).toHaveTextContent("Guardada para leer sin señal");
+    expect(screen.getByRole("status")).toHaveTextContent("Guardada sin señal");
     const saved = await (await storage.open(SAVED_CACHE)).match("/topic/metastasis");
     expect(await saved?.text()).toBe("<html>página</html>");
     expect(decodeURIComponent(saved!.headers.get(TITLE_HEADER)!)).toBe(topic.title);
@@ -58,7 +58,7 @@ describe("SaveOfflineButton", () => {
 
     await act(async () => fireEvent.click(screen.getByRole("button", { name: "Quitar" })));
 
-    expect(screen.getByRole("button", { name: "⤓ Guardar para leer sin señal" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "⤓ Guardar sin señal" })).toBeInTheDocument();
     expect(storage.paths(SAVED_CACHE)).toEqual([]);
     expect(getSaved()).toEqual([]);
   });
@@ -76,7 +76,7 @@ describe("SaveOfflineButton", () => {
     fetchMock.mockImplementation(answer);
     render(<SaveOfflineButton topic={topic} />);
 
-    await act(async () => fireEvent.click(screen.getByRole("button", { name: "⤓ Guardar para leer sin señal" })));
+    await act(async () => fireEvent.click(screen.getByRole("button", { name: "⤓ Guardar sin señal" })));
 
     expect(screen.getByRole("alert")).toHaveTextContent("No se pudo guardar");
     expect(getSaved()).toEqual([]);
@@ -88,7 +88,7 @@ describe("SaveOfflineButton", () => {
     fetchMock.mockReturnValue(new Promise((resolve) => (finish = resolve)));
     render(<SaveOfflineButton topic={topic} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "⤓ Guardar para leer sin señal" }));
+    fireEvent.click(screen.getByRole("button", { name: "⤓ Guardar sin señal" }));
 
     expect(screen.getByRole("button", { name: "Guardando…" })).toBeDisabled();
     await act(async () => finish(new Response("ok")));

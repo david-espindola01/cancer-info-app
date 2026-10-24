@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { SITE_NAME, SITE_TAGLINE } from "./site";
 
 export const metadata: Metadata = {
-  title: "Información sobre el cáncer",
+  title: `${SITE_NAME} · ${SITE_TAGLINE}`,
   description:
     "Información clara y sencilla sobre el cáncer, basada en artículos científicos.",
 };

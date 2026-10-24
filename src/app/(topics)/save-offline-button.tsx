@@ -5,10 +5,9 @@ import { canSaveOffline, removeTopic, saveTopic } from "./offline-library";
 import { getNothing, getSaved, subscribe, type ReadTopic } from "./reading-history";
 
 const noSubscription = () => () => {};
-const buttonClass = "rounded-lg border border-border bg-surface px-4 py-2 font-semibold";
 
 /**
- * «Guardar para leer sin señal»: keeps this page on the phone. Only shown where the phone
+ * «Guardar sin señal»: keeps this page on the phone. Only shown where the phone
  * can do it; what was saved is listed in «Mis temas».
  */
 export function SaveOfflineButton({ topic }: { topic: ReadTopic }) {
@@ -26,8 +25,8 @@ export function SaveOfflineButton({ topic }: { topic: ReadTopic }) {
   if (saved) {
     return (
       <p className="flex flex-wrap items-center gap-2">
-        <span role="status" className="font-semibold text-accent">
-          ✓ Guardada para leer sin señal
+        <span role="status" className="color-monte solid rounded-full px-3 py-1 text-base font-extrabold">
+          ✓ Guardada sin señal
         </span>
         <button type="button" onClick={() => void removeTopic(topic)} className="topic-link text-base">
           Quitar
@@ -38,8 +37,8 @@ export function SaveOfflineButton({ topic }: { topic: ReadTopic }) {
 
   return (
     <p className="flex flex-col items-start gap-1">
-      <button type="button" onClick={() => void save()} disabled={state === "saving"} className={buttonClass}>
-        {state === "saving" ? "Guardando…" : "⤓ Guardar para leer sin señal"}
+      <button type="button" onClick={() => void save()} disabled={state === "saving"} className="pill-button">
+        {state === "saving" ? "Guardando…" : "⤓ Guardar sin señal"}
       </button>
       {state === "failed" && (
         <span role="alert" className="text-base">

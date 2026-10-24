@@ -30,7 +30,10 @@ export function ListenButton() {
       (candidate) => candidate.checkVisibility?.() ?? true,
     );
     // innerText keeps the pauses between blocks (title, paragraphs); textContent joins them.
-    const text = (article?.innerText || article?.textContent)?.trim();
+    // The page's own buttons (this one among them) are not read.
+    const textOf = (element: HTMLElement) => element.innerText || element.textContent || "";
+    const skipped = [...(article?.querySelectorAll<HTMLElement>("[data-skip-reading]") ?? [])].map(textOf);
+    const text = skipped.reduce((all, part) => all.replace(part, ""), article ? textOf(article) : "").trim();
     if (!text) return;
     const reading = new SpeechSynthesisUtterance(text);
     reading.lang = "es";
@@ -46,9 +49,9 @@ export function ListenButton() {
       type="button"
       onClick={toggle}
       aria-pressed={speaking}
-      className="self-start rounded-lg border border-border bg-surface px-4 py-2 font-semibold"
+      className="pill-button"
     >
-      {speaking ? "■ Detener lectura" : "▶ Escuchar esta página"}
+      {speaking ? "■ Detener" : "▶ Escuchar"}
     </button>
   );
 }

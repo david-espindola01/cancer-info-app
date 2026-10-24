@@ -107,6 +107,19 @@ describe("GeneratedPage", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("No se pudo mostrar esta página.");
   });
 
+  it("puts the page's buttons right under its title, or first if it has none", () => {
+    const { unmount } = render(<GeneratedPage ui={SAMPLE_PAGE} sources={[]} actions={<button>Escuchar</button>} />);
+    const blocks = [...screen.getByRole("article").children];
+    expect(blocks[0]).toHaveTextContent("¿Qué es el cáncer?");
+    expect(blocks[1]).toHaveAttribute("data-skip-reading");
+    expect(blocks[1]).toHaveTextContent("Escuchar");
+    unmount();
+
+    const untitled = JSON.stringify({ ui: [{ Paragraph: { props: { text: "Solo texto" } } }] });
+    render(<GeneratedPage ui={untitled} sources={[]} actions={<button>Escuchar</button>} />);
+    expect(screen.getByRole("article").firstElementChild).toHaveTextContent("Escuchar");
+  });
+
   it("registers one component per catalog contract", () => {
     expect(Object.keys(components)).toEqual(catalog.map((c) => c.name));
   });
