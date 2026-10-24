@@ -59,7 +59,7 @@ export function PdfPicker({ onUpload }: { onUpload: () => void }) {
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={dropped}
-        className={`color-teal flex flex-col items-center gap-3 rounded-3xl border-2 border-dashed border-(--c) p-6 text-center transition-colors ${dragging ? "bg-(--cf)" : "bg-surface"}`}
+        className={`color-rio flex flex-col items-center gap-3 rounded-3xl border-2 border-dashed border-(--c) p-6 text-center transition-colors ${dragging ? "bg-(--cf)" : "bg-surface"}`}
       >
         <input id="pdfs" type="file" accept="application/pdf" multiple onChange={chosen} className="peer sr-only" />
         <label
